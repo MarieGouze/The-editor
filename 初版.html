@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>可爱轻盈 - 沉浸式文本编辑器 (升级版)</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            /* 浅奶黄色背景与低饱和度66ccff */
+            --bg-body: #FFFDF2; 
+            --bg-panel: #FFFFFF;
+            --primary: #8bcdef;
+            --primary-hover: #72bae0;
+            --text-main: #4a4a4a;
+            --text-muted: #888888;
+            --border-color: #e5f0f5;
+            --shadow: 0 8px 24px rgba(139, 205, 239, 0.15);
+            --radius: 16px;
+            --font-size: 16px;
+            --btn-bg: #f5fcff;
+            --btn-text: #507b94;
+        }
+
+        /* 极客黑灰 (深色护眼) */
+        [data-theme="dark"] {
+            --bg-body: #1a1b1e; --bg-panel: #25262b; --primary: #4b809e; --primary-hover: #3b667e;
+            --text-main: #c1c2c5; --text-muted: #909296; --border-color: #373a40; --shadow: 0 4px 12px rgba(0,0,0,0.5);
+            --btn-bg: #2c2e33; --btn-text: #a6a7ab;
+        }
+        /* 纯黑底黄字 (黄黑高对比) */
+        [data-theme="hc-yellow"] {
+            --bg-body: #000000; --bg-panel: #000000; --primary: #ffff00; --primary-hover: #cccc00;
+            --text-main: #ffff00; --text-muted: #aaaa00; --border-color: #ffff00; --shadow: none;
+            --btn-bg: #222200; --btn-text: #ffff00;
+        }
+        /* 深蓝底金字 (蓝黄高对比) */
+        [data-theme="hc-blue"] {
+            --bg-body: #000033; --bg-panel: #000044; --primary: #ffd700; --primary-hover: #ccaa00;
+            --text-main: #ffd700; --text-muted: #aa9900; --border-color: #ffd700; --shadow: none;
+            --btn-bg: #000066; --btn-text: #ffd700;
+        }
+        /* 森林浅绿色 (自然护眼) */
+        [data-theme="nature"] {
+            --bg-body: #eef7ee; --bg-panel: #ffffff; --primary: #81c784; --primary-hover: #66bb6a;
+            --text-main: #2e4d2f; --text-muted: #6e8e6f; --border-color: #c8e6c9; --shadow: 0 8px 24px rgba(129, 199, 132, 0.15);
+            --btn-bg: #f1f8f1; --btn-text: #388e3c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
+        
+        body {
+            font-family: 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'Nunito', 'Varela Round', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+            font-size: var(--font-size);
+        }
+
+        /* 无障碍控制条 */
+        .access-bar {
+            max-width: 1200px; margin: 0 auto 15px auto; padding: 12px 20px;
+            background: var(--bg-panel); border-radius: 50px;
+            box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 15px;
+            align-items: center; justify-content: space-between;
+        }
+        .access-group { display: flex; gap: 12px; align-items: center; font-size: 14px; flex-wrap: wrap; }
+        .access-group select, .access-group button {
+            padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border-color);
+            background: var(--btn-bg); color: var(--btn-text); cursor: pointer; outline: none;
+            font-family: inherit;
+        }
+        .access-group select:hover, .access-group button:hover { border-color: var(--primary); }
+
+        /* 开关按钮样式 */
+        .toggle-label {
+            display: flex; align-items: center; gap: 6px; cursor: pointer;
+            background: var(--btn-bg); padding: 6px 14px; border-radius: 20px;
+            border: 1px solid var(--border-color); color: var(--btn-text);
+            user-select: none; font-weight: bold;
+        }
+        .toggle-label:hover { border-color: var(--primary); }
+        .toggle-label input { display: none; }
+        .toggle-label.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+        .app-layout {
+            max-width: 1200px; margin: 0 auto; display: flex; gap: 20px;
+            align-items: flex-start; transition: all 0.4s;
+        }
+
+        /* 左侧面板 */
+        .sidebar {
+            width: 280px; flex-shrink: 0; background: var(--bg-panel);
+            border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+            border: 1px solid var(--border-color); transition: opacity 0.3s, transform 0.3s;
+        }
+        .sidebar h3 { font-size: 16px; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        
+        .stat-card-main { background: var(--btn-bg); padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; border: 1px dashed var(--primary); }
+        .stat-card-main .num { font-size: 32px; font-weight: bold; color: var(--primary); line-height: 1.2; }
+        .stat-card-main .label { font-size: 13px; color: var(--text-muted); }
+
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .stat-item { background: var(--btn-bg); padding: 10px; border-radius: 8px; text-align: center; }
+        .stat-item .num { font-size: 18px; font-weight: 600; color: var(--text-main); }
+        .stat-item .label { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        /* 右侧主区 */
+        .main-editor-area {
+            flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 15px;
+            transition: all 0.3s;
+        }
+
+        /* 工具栏面板 */
+        .toolbar-panel {
+            background: var(--bg-panel); border-radius: var(--radius);
+            padding: 15px 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        .toolbar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .toolbar-title { font-size: 14px; font-weight: bold; color: var(--text-muted); }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; }
+        
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500;
+            cursor: pointer; border: 1px solid transparent; outline: none;
+            background: var(--btn-bg); color: var(--btn-text); white-space: nowrap;
+            font-family: inherit;
+        }
+        .btn:hover { background: var(--primary); color: #fff; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-danger { color: #e57373; background: #ffebee; }
+        .btn-danger:hover { background: #e57373; color: white; }
+        .btn-punc { padding: 6px 12px; font-size: 16px; font-weight: bold; background: var(--bg-body); border: 1px solid var(--border-color); }
+
+        /* 标点符号下拉框 */
+        .punc-toolbox {
+            display: none; background: var(--btn-bg); border-radius: 8px;
+            padding: 12px; margin-bottom: 12px; border: 1px dashed var(--primary);
+            animation: fadeIn 0.2s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 编辑器包装区 */
+        .editor-wrapper {
+            position: relative; background: var(--bg-panel); border-radius: var(--radius);
+            box-shadow: var(--shadow); padding: 5px; border: 2px solid transparent; transition: all 0.3s;
+            display: flex; gap: 10px;
+        }
+        .editor-wrapper:focus-within { border-color: var(--primary); }
+        .editor-wrapper.fullscreen {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999;
+            border-radius: 0; padding: 20px; display: flex; flex-direction: row;
+            background: var(--bg-body);
+        }
+        
+        /* 核心字体调整区 */
+        textarea {
+            width: 100%; min-height: 450px; border: none; resize: vertical;
+            padding: 20px 40px 20px 20px; font-size: var(--font-size); font-family: inherit;
+            background: transparent; color: inherit; outline: none; 
+            line-height: 1.85; 
+            font-weight: 500;
+            letter-spacing: 0.8px;
+            transition: padding 0.4s, width 0.3s;
+        }
+        .fullscreen textarea { flex-grow: 1; resize: none; min-height: 100%; }
+
+        /* Markdown 预览区 */
+        .md-preview {
+            display: none; width: 50%; padding: 20px; overflow-y: auto;
+            border-left: 1px dashed var(--border-color);
+            line-height: 1.8; color: var(--text-main); font-size: var(--font-size);
+        }
+        .md-preview h1, .md-preview h2, .md-preview h3 { color: var(--primary); margin-top: 1em; margin-bottom: 0.5em; }
+        .md-preview p { margin-bottom: 1em; }
+        .md-preview blockquote { border-left: 4px solid var(--primary); padding-left: 15px; color: var(--text-muted); background: var(--btn-bg); padding: 10px 15px; border-radius: 0 8px 8px 0; }
+        .md-preview code { background: var(--btn-bg); padding: 2px 6px; border-radius: 4px; font-family: monospace; color: #e57373; }
+        .md-preview pre { background: var(--bg-body); padding: 15px; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
+        
+        /* 分屏模式样式 */
+        .editor-wrapper.split-mode textarea { width: 50%; }
+        .editor-wrapper.split-mode .md-preview { display: block; }
+
+        /* 打字机模式样式 */
+        .typewriter-mode textarea { padding-bottom: 40vh; padding-top: 10vh; }
+
+        /* 禅定模式样式 (隐藏多余元素) */
+        body.zen-mode .sidebar { opacity: 0; pointer-events: none; position: absolute; transform: translateX(-20px); }
+        body.zen-mode .main-editor-area { margin: 0 auto; max-width: 900px; }
+        body.zen-mode .toolbar-panel { opacity: 0; pointer-events: none; position: absolute; }
+        body.zen-mode .editor-wrapper { box-shadow: none; border-color: transparent; background: transparent; }
+        /* 鼠标悬停顶部时稍微显示工具栏，方便退出 */
+        body.zen-mode .access-bar { opacity: 0.2; transition: opacity 0.3s; }
+        body.zen-mode .access-bar:hover { opacity: 1; }
+
+        /* 放大按钮 */
+        .btn-expand {
+            position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
+            border-radius: 8px; border: none; background: var(--btn-bg); color: var(--primary);
+            font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            opacity: 0.7; z-index: 10;
+        }
+        .btn-expand:hover { opacity: 1; background: var(--primary); color: #fff; }
+
+        /* 保存提示 Toast */
+        .toast {
+            position: fixed; top: 20px; right: 20px; background: var(--primary); color: white;
+            padding: 10px 20px; border-radius: 8px; box-shadow: var(--shadow);
+            transform: translateY(-50px); opacity: 0; transition: all 0.3s ease; z-index: 10000;
+            font-weight: bold; pointer-events: none;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+
+        /* 响应式 */
+        @media (max-width: 800px) {
+            .app-layout { flex-direction: column; }
+            .sidebar { width: 100%; position: static; }
+            body.zen-mode .sidebar { display: none; }
+            textarea { min-height: 300px; }
+            .access-bar { flex-direction: column; align-items: flex-start; border-radius: 16px; }
+            .editor-wrapper.split-mode { flex-direction: column; }
+            .editor-wrapper.split-mode textarea, .editor-wrapper.split-mode .md-preview { width: 100%; min-height: 300px; border-left: none; border-top: 1px dashed var(--border-color); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast" id="save-toast">💾 已自动保存到本地</div>
+
+    <div class="access-bar">
+        <div class="access-group">
+            <label class="toggle-label" id="lbl-zen">
+                <input type="checkbox" onchange="toggleZenMode(this)"> 🧘 禅定纯净
+            </label>
+            <label class="toggle-label" id="lbl-typewriter">
+                <input type="checkbox" onchange="toggleTypewriter(this)"> 🖨️ 打字机模式
+            </label>
+            <label class="toggle-label" id="lbl-markdown">
+                <input type="checkbox" onchange="toggleMarkdown(this)"> 📝 Markdown 预览
+            </label>
+        </div>
+
+        <div class="access-group">
+            <span style="color: var(--primary); font-weight: bold;">无障碍字体:</span>
+            <select onchange="changeFontSize(this.value)">
+                <option value="16px">标准字 (16px)</option>
+                <option value="20px">中级字 (20px)</option>
+                <option value="24px">较大字 (24px)</option>
+                <option value="28px">超大字 (28px)</option>
+                <option value="36px">特大字 (36px)</option>
+            </select>
+            <span style="color: var(--primary); font-weight: bold; margin-left:10px;">色彩模式:</span>
+            <select onchange="changeTheme(this.value)">
+                <option value="light">标准明亮 (浅奶黄+清透蓝)</option>
+                <option value="dark">深色护眼 (极客黑灰)</option>
+                <option value="hc-yellow">黄黑高对比 (纯黑底黄字)</option>
+                <option value="hc-blue">蓝黄高对比 (深蓝底金字)</option>
+                <option value="nature">自然护眼 (森林浅绿)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <aside class="sidebar">
+            <h3>📊 字数详情统计</h3>
+            <div class="stat-card-main">
+                <div class="num" id="s-total">0</div>
+                <div class="label">总字数 (含空格/全角)</div>
+            </div>
+            <div class="stat-card-main" style="border-color: #a0d4a4;">
+                <div class="num" id="s-cn" style="color: #66bb6a;">0</div>
+                <div class="label">纯中文字数</div>
+            </div>
+            <div class="stat-grid">
+                <div class="stat-item"><div class="num" id="s-en">0</div><div class="label">英文单词数</div></div>
+                <div class="stat-item"><div class="num" id="s-num">0</div><div class="label">数字个数</div></div>
+                <div class="stat-item"><div class="num" id="s-punc">0</div><div class="label">标点符号数</div></div>
+                <div class="stat-item"><div class="num" id="s-para">0</div><div class="label">段落总数</div></div>
+            </div>
+            
+            <div style="margin-top: 20px; padding: 15px; background: var(--btn-bg); border-radius: 8px; font-size: 12px; color: var(--text-muted);">
+                <b>💡 快捷键提示:</b><br>
+                <code>Ctrl + S</code>: 手动保存<br>
+                <code>Ctrl + B</code>: 快捷加粗 **<br>
+                <code>Ctrl + F</code>: 查找/替换<br>
+                <i>（内容实时自动保存至浏览器）</i>
+            </div>
+        </aside>
+
+        <main class="main-editor-area" id="main-area">
+            
+            <div class="toolbar-panel">
+                <div class="toolbar-header">
+                    <span class="toolbar-title">✨ 极速编辑区</span>
+                    <button class="btn" style="background: var(--primary); color: white;" onclick="togglePuncBox()">🧰 符号工具箱 ▾</button>
+                </div>
+                
+                <div class="punc-toolbox" id="punc-box">
+                    <div class="btn-group">
+                        <button class="btn btn-punc" onclick="insertSymbol('、', 1)">、</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('：', 1)">：</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('**', 1)">**</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('“”', 1)">“”</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('（）', 1)">（）</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('「」', 1)">「」</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('『』', 1)">【】</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('《》', 1)">《》</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('（）', 1)">‧</button>
+                        <button class="btn btn-punc" onclick="insertSymbol('「」', 1)">╴</button>
+                        <span style="border-left: 1px solid var(--border-color); margin: 0 5px;"></span>
+                        <button class="btn" onclick="insertSymbol('\n\n✦ ━━━  ━━━ ✦\n\n', 9)">📍 地点转场</button>
+                        <button class="btn" onclick="insertSymbol('\n\n✧ ════════════ ✧\n\n', 19)">✨ 场景分割</button>
+                        <button class="btn" onclick="insertSymbol('\n\n❖ —— [ 视角切换 ] —— ❖\n\n', 22)">👁️ 视角切换</button>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="actUndo()">↩ 撤销</button>
+                    <button class="btn" onclick="actPaste()">📋 快捷粘贴</button>
+                    <button class="btn" onclick="actCopy()">📄 复制</button>
+                    <button class="btn" onclick="actFindReplace()">🔍 查找/替换</button>
+                    <button class="btn" onclick="document.getElementById('file-upload').click()">📤 上传文件</button>
+                    <button class="btn" onclick="actDownload()">📥 下载TXT</button>
+                    <button class="btn btn-danger" onclick="actClear()">🗑️ 清空</button>
+                    <input type="file" id="file-upload" accept=".txt" style="display: none;" onchange="actUpload(event)">
+                </div>
+            </div>
+
+            <div class="editor-wrapper" id="editor-wrap">
+                <button class="btn-expand" id="btn-fullscreen" onclick="toggleFullscreen()" title="放大/缩小文本框">⛶</button>
+                <textarea id="main-input" placeholder="在此输入或粘贴需要统计排版的文字内容...&#10;&#10;已开启本地自动保存，您的每一次输入都会被安全记录在浏览器中。"></textarea>
+                <div class="md-preview" id="md-preview-pane"></div>
+            </div>
+
+            <div class="toolbar-panel">
+                <div class="toolbar-title" style="margin-bottom: 10px;">🛠️ 文本整理</div>
+                <div class="btn-group">
+                    <button class="btn" onclick="fmtTrimSpaces()">清除多余空格</button>
+                    <button class="btn" onclick="fmtRemoveBlankLines()">清除所有空白行</button>
+                    <button class="btn" onclick="fmtToHalfWidth()">全角转半角</button>
+                    <button class="btn" onclick="fmtToFullWidth()">半角转全角</button>
+                    <button class="btn" onclick="fmtNormPunc()">中文标点规范</button>
+                    <button class="btn" onclick="fmtToTraditional()">转为繁体</button>
+                    <button class="btn" onclick="fmtToSimplified()">转为简体</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const editor = document.getElementById('main-input');
+        const mdPreviewPane = document.getElementById('md-preview-pane');
+        const LOCAL_STORAGE_KEY = 'cute_editor_draft';
+        let historyStack = [''];
+        let historyTimeout;
+        let isMarkdownMode = false;
+        
+        // 初始化：加载本地缓存内容 & 聚焦
+        window.onload = () => {
+            const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (savedData) {
+                editor.value = savedData;
+                historyStack = [savedData];
+                updateStats();
+                showToast('已恢复上次编辑的内容');
+            }
+            editor.focus();
+        };
+
+        // 数据安全：监听输入并自动保存至 LocalStorage
+        editor.addEventListener('input', () => {
+            updateStats();
+            
+            // 自动保存
+            localStorage.setItem(LOCAL_STORAGE_KEY, editor.value);
+            
+            // 实时渲染 Markdown
+            if (isMarkdownMode) renderMarkdown();
+
+            // 撤销栈记录
+            clearTimeout(historyTimeout);
+            historyTimeout = setTimeout(() => {
+                if (historyStack[historyStack.length - 1] !== editor.value) {
+                    historyStack.push(editor.value);
+                    if (historyStack.length > 50) historyStack.shift();
+                }
+            }, 500);
+        });
+
+        // 全局快捷键感知与沉浸式体验
+        document.addEventListener('keydown', (e) => {
+            // 忽略非编辑区的按键组合（如果不强制要求焦点在文本框）
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 's':
+                        e.preventDefault();
+                        localStorage.setItem(LOCAL_STORAGE_KEY, editor.value);
+                        showToast('已手动保存到本地');
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        insertSymbol('**', 2);
+                        break;
+                    case 'f':
+                        e.preventDefault();
+                        actFindReplace();
+                        break;
+                }
+            }
+        });
+
+        function setValue(newVal) {
+            editor.value = newVal;
+            localStorage.setItem(LOCAL_STORAGE_KEY, newVal);
+            updateStats();
+            historyStack.push(newVal);
+            if(isMarkdownMode) renderMarkdown();
+        }
+
+        // ================= UI 提示 =================
+        let toastTimeout;
+        function showToast(msg) {
+            const toast = document.getElementById('save-toast');
+            toast.innerText = '💾 ' + msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2500);
+        }
+
+        // ================= 智能符号插入 =================
+        function togglePuncBox() {
+            const box = document.getElementById('punc-box');
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function insertSymbol(symbol, cursorOffset) {
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const text = editor.value;
+
+            if (start !== end && symbol.length >= 2 && cursorOffset > 0) {
+                const prefix = symbol.substring(0, cursorOffset);
+                const suffix = symbol.substring(cursorOffset);
+                const selectedText = text.substring(start, end);
+                
+                setValue(text.substring(0, start) + prefix + selectedText + suffix + text.substring(end));
+                editor.selectionStart = start + prefix.length;
+                editor.selectionEnd = start + prefix.length + selectedText.length;
+            } else {
+                setValue(text.substring(0, start) + symbol + text.substring(end));
+                editor.selectionStart = editor.selectionEnd = start + cursorOffset;
+            }
+            editor.focus();
+        }
+
+        // ================= 模式切换 (禅定/打字机/Markdown) =================
+        function toggleZenMode(checkbox) {
+            const lbl = document.getElementById('lbl-zen');
+            if (checkbox.checked) {
+                document.body.classList.add('zen-mode');
+                lbl.classList.add('active');
+            } else {
+                document.body.classList.remove('zen-mode');
+                lbl.classList.remove('active');
+            }
+            editor.focus();
+        }
+
+        function toggleTypewriter(checkbox) {
+            const wrap = document.getElementById('editor-wrap');
+            const lbl = document.getElementById('lbl-typewriter');
+            if (checkbox.checked) {
+                wrap.classList.add('typewriter-mode');
+                lbl.classList.add('active');
+            } else {
+                wrap.classList.remove('typewriter-mode');
+                lbl.classList.remove('active');
+            }
+            editor.focus();
+        }
+
+        function toggleMarkdown(checkbox) {
+            const wrap = document.getElementById('editor-wrap');
+            const lbl = document.getElementById('lbl-markdown');
+            isMarkdownMode = checkbox.checked;
+            
+            if (isMarkdownMode) {
+                wrap.classList.add('split-mode');
+                lbl.classList.add('active');
+                renderMarkdown();
+            } else {
+                wrap.classList.remove('split-mode');
+                lbl.classList.remove('active');
+            }
+            editor.focus();
+        }
+
+        function renderMarkdown() {
+            if (typeof marked !== 'undefined') {
+                mdPreviewPane.innerHTML = marked.parse(editor.value);
+            }
+        }
+
+        // ================= 统计逻辑 =================
+        function updateStats() {
+            const text = editor.value;
+            document.getElementById('s-total').innerText = text.length;
+            
+            const cnMatches = text.match(/[\u4e00-\u9fa5]/g);
+            document.getElementById('s-cn').innerText = cnMatches ? cnMatches.length : 0;
+            
+            const enWords = text.match(/[a-zA-Z]+/g);
+            document.getElementById('s-en').innerText = enWords ? enWords.length : 0;
+            
+            const nums = text.match(/[0-9]/g);
+            document.getElementById('s-num').innerText = nums ? nums.length : 0;
+            
+            const puncs = text.match(/[^\w\s\u4e00-\u9fa5]/g);
+            document.getElementById('s-punc').innerText = puncs ? puncs.length : 0;
+            
+            const paras = text.split(/\n+/).filter(p => p.trim().length > 0);
+            document.getElementById('s-para').innerText = text.length === 0 ? 0 : paras.length;
+        }
+
+        // ================= 基础工具功能 =================
+        function actUndo() {
+            if (historyStack.length > 1) {
+                historyStack.pop();
+                editor.value = historyStack[historyStack.length - 1];
+                localStorage.setItem(LOCAL_STORAGE_KEY, editor.value);
+                updateStats();
+                if(isMarkdownMode) renderMarkdown();
+            }
+        }
+        
+        async function actPaste() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const start = editor.selectionStart;
+                const end = editor.selectionEnd;
+                setValue(editor.value.substring(0, start) + text + editor.value.substring(end));
+            } catch (err) { alert('剪贴板权限被拒绝，请使用 Ctrl+V 快捷键'); }
+        }
+
+        function actCopy() { editor.select(); document.execCommand('copy'); showToast('内容已复制！'); editor.focus(); }
+        function actClear() { 
+            if(confirm('确定要清空吗？')) { 
+                setValue(''); 
+                localStorage.removeItem(LOCAL_STORAGE_KEY);
+                editor.focus(); 
+            } 
+        }
+        
+        function actFindReplace() {
+            const find = prompt('请输入要查找的内容：');
+            if (!find) return;
+            const replace = prompt('替换为（留空则为删除）：') || '';
+            const reg = new RegExp(find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            setValue(editor.value.replace(reg, replace));
+        }
+
+        function actUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => { setValue(e.target.result); event.target.value = ''; showToast('文件读取成功'); };
+            reader.readAsText(file);
+        }
+
+        function actDownload() {
+            if (!editor.value) return alert('没有内容可以下载');
+            const blob = new Blob([editor.value], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = '文本导出_' + new Date().getTime() + '.txt';
+            a.click(); URL.revokeObjectURL(url);
+        }
+
+        function toggleFullscreen() {
+            const wrap = document.getElementById('editor-wrap');
+            const btn = document.getElementById('btn-fullscreen');
+            wrap.classList.toggle('fullscreen');
+            if (wrap.classList.contains('fullscreen')) {
+                btn.innerText = '✖'; btn.title = '退出放大';
+                document.body.style.overflow = 'hidden';
+            } else {
+                btn.innerText = '⛶'; btn.title = '放大文本框';
+                document.body.style.overflow = '';
+            }
+        }
+
+        // ================= 底部排版功能 =================
+        function fmtTrimSpaces() { setValue(editor.value.replace(/[ \t]+/g, ' ').replace(/^ +| +$/gm, '')); }
+        function fmtRemoveBlankLines() { setValue(editor.value.replace(/^\s*[\r\n]/gm, '')); }
+        
+        function fmtToHalfWidth() {
+            let res = "";
+            for (let i = 0; i < editor.value.length; i++) {
+                let code = editor.value.charCodeAt(i);
+                if (code >= 65281 && code <= 65374) res += String.fromCharCode(code - 65248);
+                else if (code == 12288) res += String.fromCharCode(32);
+                else res += editor.value.charAt(i);
+            }
+            setValue(res);
+        }
+
+        function fmtToFullWidth() {
+            let res = "";
+            for (let i = 0; i < editor.value.length; i++) {
+                let code = editor.value.charCodeAt(i);
+                if (code >= 33 && code <= 126) res += String.fromCharCode(code + 65248);
+                else if (code == 32) res += String.fromCharCode(12288);
+                else res += editor.value.charAt(i);
+            }
+            setValue(res);
+        }
+
+        function fmtNormPunc() {
+            setValue(editor.value.replace(/,/g, '，').replace(/\./g, '。').replace(/\?/g, '？')
+                 .replace(/!/g, '！').replace(/;/g, '；').replace(/:/g, '：'));
+        }
+
+        const simpToTradMap = {'体':'體','国':'國','观':'觀','欢':'歡','机':'機','学':'學','爱':'愛','发':'發','东':'東'};
+        const tradToSimpMap = {'體':'体','國':'国','觀':'观','歡':'欢','機':'机','學':'学','愛':'爱','發':'发','東':'东'};
+        function fmtToTraditional() {
+            let v = editor.value; for (let s in simpToTradMap) v = v.split(s).join(simpToTradMap[s]); setValue(v);
+        }
+        function fmtToSimplified() {
+            let v = editor.value; for (let t in tradToSimpMap) v = v.split(t).join(tradToSimpMap[t]); setValue(v);
+        }
+
+        // ================= 样式控制 =================
+        function changeFontSize(size) { document.documentElement.style.setProperty('--font-size', size); }
+        function changeTheme(themeName) { document.documentElement.setAttribute('data-theme', themeName); }
+
+    </script>
+</body>
+</html>
