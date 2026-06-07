@@ -510,6 +510,7 @@
                             <option value="zip">.zip(全库)</option>
                         </select>
                     </div>
+					<button class="btn" style="color: #0088cc;" onclick="sendToTelegram()">✈️</button>
                     <button class="btn btn-danger" onclick="actClear()">🗑️ 清空</button>
                 </div>
             </div>
@@ -551,6 +552,8 @@
             </div>
         </main>
     </div>
+	
+	<button class="btn-mobile-tg" onclick="sendToTelegram()" title="发送至 TG">✈️</button>
 
     <script>
         (function initPWA() {
