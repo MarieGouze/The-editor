@@ -164,6 +164,19 @@
         textarea.main-ta { width: 100%; min-height: 450px; border: none; resize: vertical; padding: 20px 40px 20px 20px; font-size: var(--font-size); font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'PingFang SC', sans-serif; background: transparent; color: inherit; outline: none; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; transition: padding 0.4s, width 0.3s; }
         .fullscreen textarea.main-ta { flex-grow: 1; resize: none; min-height: 100%; }
 
+        /* 新增：长文档缩略图 (Minimap) - 独立右侧面板版 */
+        .minimap-container { position: relative; width: 70px; flex-shrink: 0; background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; opacity: 0.4; transition: all 0.3s ease; cursor: pointer; user-select: none; margin-left: 5px; }
+        .minimap-container:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: var(--primary); }
+        .minimap-content { font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', sans-serif; font-size: 12px; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; white-space: pre-wrap; word-break: break-all; color: var(--text-muted); transform: scale(0.18); transform-origin: top left; width: 380px; padding: 10px; pointer-events: none; opacity: 0.7;}
+        .minimap-viewport { position: absolute; top: 0; left: 0; width: 100%; background: var(--primary); opacity: 0.15; border-radius: 6px; pointer-events: none; transition: top 0.1s, opacity 0.2s; border: 1px solid var(--primary); box-sizing: border-box;}
+        .minimap-container:hover .minimap-viewport { opacity: 0.3; }
+
+        /* 新增：Slash Command 菜单 */
+        .slash-menu { position: absolute; display: none; background: var(--modal-bg); border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 6px; flex-direction: column; width: 180px; backdrop-filter: blur(8px); }
+        .slash-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-main); transition: background 0.2s, color 0.2s; display: flex; align-items: center; gap: 8px; font-weight: 500;}
+        .slash-item:hover, .slash-item.active { background: var(--primary); color: white; }
+        .slash-icon { opacity: 0.7; font-family: monospace; font-size: 14px; width: 20px; text-align: center;}
+
         .md-preview { display: none; width: 50%; padding: 20px; overflow-y: auto; border-left: 1px dashed var(--border-color); line-height: 1.8; color: var(--text-main); font-size: var(--font-size); }
         .editor-wrapper.split-mode textarea.main-ta { width: 50%; }
         .editor-wrapper.split-mode .md-preview { display: block; }
@@ -179,7 +192,8 @@
 
         .typewriter-mode textarea.main-ta { padding-bottom: 50vh; padding-top: 10vh; }
 
-        .status-indicator { position: absolute; bottom: 10px; right: 20px; font-size: 12px; color: var(--text-muted); opacity: 0.7; transition: opacity 0.3s, color 0.3s; pointer-events: none; z-index: 10; background: var(--bg-panel); padding: 2px 8px; border-radius: 10px;}
+        /* 状态栏位置调整，避开右侧面板 */
+        .status-indicator { position: absolute; bottom: 10px; right: 90px; font-size: 12px; color: var(--text-muted); opacity: 0.7; transition: opacity 0.3s, color 0.3s; pointer-events: none; z-index: 10; background: var(--bg-panel); padding: 2px 8px; border-radius: 10px;}
         .status-indicator.saving { color: var(--primary); font-weight: 600; opacity: 1; }
 
         body.zen-mode .sidebar { opacity: 0; pointer-events: none; position: absolute; transform: translateX(-20px); }
@@ -233,10 +247,21 @@
             .editor-wrapper.dual-mode { flex-direction: column; }
             .editor-wrapper.dual-mode textarea.main-ta, .editor-wrapper.dual-mode .dual-pane-container { width: 100%; min-height: 300px; border-left: none; border-top: 1px dashed var(--border-color); }
             .fr-row { flex-direction: column; align-items: stretch; }
+            .minimap-container { display: none; }
         }
     </style>
 </head>
 <body>
+
+    <div id="slash-menu" class="slash-menu">
+        <div class="slash-item active" data-cmd="h1"><span class="slash-icon">H1</span>一级标题</div>
+        <div class="slash-item" data-cmd="h2"><span class="slash-icon">H2</span>二级标题</div>
+        <div class="slash-item" data-cmd="h3"><span class="slash-icon">H3</span>三级标题</div>
+        <div class="slash-item" data-cmd="todo"><span class="slash-icon">☑</span>待办清单</div>
+        <div class="slash-item" data-cmd="quote"><span class="slash-icon">❝</span>引用块</div>
+        <div class="slash-item" data-cmd="line"><span class="slash-icon">─</span>分割线</div>
+        <div class="slash-item" data-cmd="code"><span class="slash-icon">&lt;/&gt;</span>代码块</div>
+    </div>
 
     <div class="toast" id="sys-toast">💾 操作成功</div>
 
@@ -492,7 +517,8 @@
             <div class="editor-wrapper" id="editor-wrap">
                 <button class="btn-expand" id="btn-fullscreen" onclick="toggleFullscreen()" title="放大/缩小">⛶</button>
                 
-                <textarea id="main-input" class="main-ta" placeholder="在此输入正文...&#10;选中文本按 [ 或 “ 自动包裹；按 Ctrl+B 加粗；按 Alt+↑/↓ 快捷移动行。"></textarea>
+                <textarea id="main-input" class="main-ta" placeholder="在此输入正文...&#10;快捷键：输入 / 呼出命令菜单，选中文本按 [ 自动包裹，Alt+↑/↓ 移动行。"></textarea>
+                
                 <div class="md-preview" id="md-preview-pane"></div>
                 
                 <div class="dual-pane-container" id="dual-pane">
@@ -500,6 +526,11 @@
                         <select id="dual-doc-select" onchange="loadDualDoc(this.value)"></select>
                     </div>
                     <textarea id="dual-input" placeholder="在此独立编辑对比文档..." oninput="saveDualDoc()"></textarea>
+                </div>
+
+                <div class="minimap-container" id="minimap-container" onclick="handleMinimapClick(event)">
+                    <div class="minimap-content" id="minimap-content"></div>
+                    <div class="minimap-viewport" id="minimap-viewport"></div>
                 </div>
 
                 <div class="status-indicator" id="save-status">[ 就绪 ]</div>
@@ -610,10 +641,8 @@
 
         // ================= 回收站逻辑 (软删除) =================
         function saveTrashState() { localStorage.setItem(TRASH_KEY, JSON.stringify(trashDocs)); }
-        
         function openTrashModal() { renderTrashList(); document.getElementById('trash-modal').classList.add('show'); }
         function closeTrashModal(e) { if(e) e.stopPropagation(); document.getElementById('trash-modal').classList.remove('show'); }
-        
         function renderTrashList() {
             const ul = document.getElementById('trash-list-ui');
             if(trashDocs.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">回收站为空</li>'; return; }
@@ -629,17 +658,14 @@
                 </li>
             `).join('');
         }
-
         function restoreFromTrash(index) {
             const doc = trashDocs[index]; trashDocs.splice(index, 1); delete doc.deletedAt; docs.push(doc); 
             saveTrashState(); saveDocsStateSilent(); renderDocsList(); renderTabs(); updateDualSelectOptions(); renderTrashList(); showToast('✅ 文档已恢复');
         }
-
         function emptyTrash() {
             if(trashDocs.length === 0) return;
             if(confirm('⚠️ 彻底清空回收站后将无法恢复，确定吗？')) { trashDocs = []; saveTrashState(); renderTrashList(); showToast('🗑️ 回收站已清空'); }
         }
-
         function deleteDoc(id, e) {
             if(e) e.stopPropagation(); 
             if(docs.length <= 1) return showToast('⚠️ 至少保留一个文档！');
@@ -657,14 +683,12 @@
         function toggleFindReplace() { const p = document.getElementById('find-replace-panel'); if(p.style.display === 'flex') { p.style.display = 'none'; document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; editor.focus(); } else { p.style.display = 'flex'; document.getElementById('find-input').focus(); } }
         function doFindNext() { const q = document.getElementById('find-input').value; if(!q) return; let i = editor.value.indexOf(q, editor.selectionEnd); if (i === -1) i = editor.value.indexOf(q, 0); if (i !== -1) { editor.focus(); editor.setSelectionRange(i, i + q.length); } else showToast('❌ 未找到'); }
         function doFindPrev() { const q = document.getElementById('find-input').value; if(!q) return; let startPos = editor.selectionStart > 0 ? editor.selectionStart - 1 : 0; let i = editor.value.lastIndexOf(q, startPos); if (i === -1) i = editor.value.lastIndexOf(q, editor.value.length); if (i !== -1) { editor.focus(); editor.setSelectionRange(i, i + q.length); } else showToast('❌ 未找到'); }
-
         function doSearchList() {
             const q = document.getElementById('find-input').value; const container = document.getElementById('search-results-container'); const list = document.getElementById('search-results-list'); const countLabel = document.getElementById('search-count'); const btnReplaceSel = document.getElementById('btn-replace-selected');
             if(!q) { container.style.display = 'none'; btnReplaceSel.style.display = 'none'; return; }
             currentSearchMatches = []; let content = editor.value; let i = content.indexOf(q, 0);
             while (i !== -1) { currentSearchMatches.push({ start: i, end: i + q.length }); i = content.indexOf(q, i + q.length); }
             if (currentSearchMatches.length === 0) { container.style.display = 'none'; btnReplaceSel.style.display = 'none'; showToast('❌ 未找到匹配项'); return; }
-
             let html = '';
             currentSearchMatches.forEach((match, index) => {
                 const pre = content.substring(Math.max(0, match.start - 15), match.start); const post = content.substring(match.end, Math.min(content.length, match.end + 15));
@@ -675,10 +699,8 @@
         }
         function focusMatch(start, end) { editor.focus(); editor.setSelectionRange(start, end); }
         function toggleSelectAllMatches(cb) { document.querySelectorAll('.match-cb').forEach(c => c.checked = cb.checked); }
-
         function doReplaceCurrent() { const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; const sel = editor.value.substring(editor.selectionStart, editor.selectionEnd); if(sel === q) { insertTextAtCursor(r, editor.selectionStart, editor.selectionEnd, r.length); doFindNext(); } else doFindNext(); }
         function doReplaceAll() { const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; if(!q) return; const reg = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); const nc = editor.value.replace(reg, r); if(editor.value !== nc) { setValue(nc); showToast('✅ 替换完成'); document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; } }
-        
         function doReplaceSelected() {
             const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value;
             const checkboxes = document.querySelectorAll('.match-cb:checked'); if (checkboxes.length === 0) return showToast('⚠️ 未勾选');
@@ -688,7 +710,7 @@
             if (replaceCount > 0) { setValue(content); showToast(`✅ 替换 ${replaceCount} 处`); doSearchList(); }
         }
 
-        // ================= 编辑器核心与工具 =================
+        // ================= 编辑器核心、缩略图、Snippets、Slash =================
         function toggleDualMode(cb) {
             const wrap = document.getElementById('editor-wrap'); const mdLbl = document.getElementById('lbl-markdown'); const mdCb = mdLbl.querySelector('input');
             isDualMode = cb.checked;
@@ -714,13 +736,108 @@
         editor.addEventListener('keyup', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
         editor.addEventListener('click', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
 
-        editor.addEventListener('input', () => {
+        // 自定义文本片段词典
+        const customSnippets = {
+            '/date': () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
+            '/time': () => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; },
+            ';;bg': () => "【工作汇报】\n1. 今日进展：\n2. 遇到问题：\n3. 明日计划：\n",
+            ';;todo': () => "- [ ] "
+        };
+
+        let isSlashActive = false;
+        let slashStartPos = -1;
+        let slashIndex = 0;
+
+        editor.addEventListener('input', (e) => {
             const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value;
-            updateStats(); saveDocsStateSilent(); if (isMarkdownMode) renderMarkdown(); if (isTypewriterMode) doTypewriterScroll();
+            
+            // 检测 Snippets 快捷展开
+            const textBeforeCursor = editor.value.substring(0, editor.selectionStart);
+            for (const [key, getVal] of Object.entries(customSnippets)) {
+                if (textBeforeCursor.endsWith(key)) {
+                    const val = getVal(); const start = editor.selectionStart - key.length;
+                    editor.value = editor.value.substring(0, start) + val + editor.value.substring(editor.selectionEnd);
+                    editor.selectionStart = editor.selectionEnd = start + val.length;
+                    if(doc) doc.content = editor.value;
+                    break;
+                }
+            }
+
+            // 检测 Slash Command 触发
+            if (e.data === '/') {
+                const charBefore = editor.value.charAt(editor.selectionStart - 2);
+                if (!charBefore || charBefore === '\n' || charBefore === ' ') openSlashMenu();
+            } else if (isSlashActive) {
+                const filterText = editor.value.substring(slashStartPos + 1, editor.selectionStart);
+                if (filterText.includes(' ') || filterText.includes('\n')) closeSlashMenu();
+            }
+
+            updateStats(); saveDocsStateSilent(); updateMinimap(); if (isMarkdownMode) renderMarkdown(); if (isTypewriterMode) doTypewriterScroll();
             clearTimeout(historyTimeout); historyTimeout = setTimeout(() => { renderTOC(); if (historyStack[historyStack.length - 1] !== editor.value) { historyStack.push(editor.value); redoStack = []; if (historyStack.length > 50) historyStack.shift(); } }, 800); 
         });
 
+        // Slash Command 菜单控制
+        function openSlashMenu() {
+            isSlashActive = true; slashStartPos = editor.selectionStart - 1; slashIndex = 0;
+            const menu = document.getElementById('slash-menu');
+            
+            // 获取光标大致位置
+            const wrapRect = document.getElementById('editor-wrap').getBoundingClientRect();
+            const mirror = document.createElement('div');
+            const style = window.getComputedStyle(editor);
+            ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'padding', 'width', 'whiteSpace', 'wordWrap', 'letterSpacing'].forEach(p => mirror.style[p] = style[p]);
+            mirror.style.position = 'absolute'; mirror.style.visibility = 'hidden';
+            mirror.textContent = editor.value.substring(0, editor.selectionStart);
+            const span = document.createElement('span'); span.textContent = '|'; mirror.appendChild(span);
+            document.body.appendChild(mirror);
+            
+            let top = span.offsetTop - editor.scrollTop + wrapRect.top;
+            let left = span.offsetLeft - editor.scrollLeft + wrapRect.left;
+            document.body.removeChild(mirror);
+
+            menu.style.top = Math.min(top + 30, window.innerHeight - menu.offsetHeight - 20) + 'px';
+            menu.style.left = left + 'px';
+            menu.style.display = 'flex';
+            updateSlashSelect();
+        }
+        function closeSlashMenu() { isSlashActive = false; document.getElementById('slash-menu').style.display = 'none'; }
+        function updateSlashSelect() {
+            const items = document.querySelectorAll('.slash-item');
+            items.forEach((item, i) => {
+                if(i === slashIndex) item.classList.add('active'); else item.classList.remove('active');
+            });
+        }
+        
+        // 绑定 Slash Menu 点击事件
+        document.querySelectorAll('.slash-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                execSlash(item.getAttribute('data-cmd'));
+            });
+        });
+
+        function execSlash(cmd) {
+            const cmds = { 'h1': '# ', 'h2': '## ', 'h3': '### ', 'todo': '- [ ] ', 'quote': '> ', 'line': '---\n', 'code': '```\n\n```\n' };
+            const insertStr = cmds[cmd];
+            const before = editor.value.substring(0, slashStartPos);
+            const after = editor.value.substring(editor.selectionEnd);
+            editor.value = before + insertStr + after;
+            editor.selectionStart = editor.selectionEnd = before.length + insertStr.length - (cmd === 'code' ? 5 : 0);
+            
+            closeSlashMenu(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown();
+            editor.focus();
+        }
+
         editor.addEventListener('keydown', function(e) {
+            // 劫持 Slash 菜单的按键
+            if (isSlashActive) {
+                const totalItems = document.querySelectorAll('.slash-item').length;
+                if (e.key === 'ArrowDown') { e.preventDefault(); slashIndex = (slashIndex + 1) % totalItems; updateSlashSelect(); return; }
+                if (e.key === 'ArrowUp') { e.preventDefault(); slashIndex = (slashIndex - 1 + totalItems) % totalItems; updateSlashSelect(); return; }
+                if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.slash-item')[slashIndex].click(); return; }
+                if (e.key === 'Escape' || e.key === 'Backspace' && editor.selectionStart <= slashStartPos + 1) { closeSlashMenu(); }
+            }
+
             const start = this.selectionStart; const end = this.selectionEnd; const selected = this.value.substring(start, end);
             
             // 行级快捷键 Alt + Up/Down
@@ -751,26 +868,46 @@
             if (selected && wrapPairs[e.key]) { e.preventDefault(); insertTextAtCursor(`${e.key}${selected}${wrapPairs[e.key]}`, start, end, 1); }
         });
 
-        document.addEventListener('keydown', (e) => { if (e.altKey && e.key.toLowerCase() === 's' && document.activeElement !== editor) { e.preventDefault(); sendToTelegram(); } });
+        // 全局点击关闭 Slash 菜单
+        document.addEventListener('click', (e) => { if (isSlashActive && e.target.id !== 'main-input') closeSlashMenu(); });
 
         let isSyncingLeft = false;
         editor.addEventListener('scroll', function() {
+            syncMinimapScroll();
             if (!isMarkdownMode || isSyncingLeft) return; isSyncingLeft = true;
             const percentage = this.scrollTop / (this.scrollHeight - this.clientHeight);
             mdPreviewPane.scrollTop = percentage * (mdPreviewPane.scrollHeight - mdPreviewPane.clientHeight);
             setTimeout(() => isSyncingLeft = false, 20);
         });
 
+        // Minimap 逻辑
+        function updateMinimap() { document.getElementById('minimap-content').textContent = editor.value; syncMinimapScroll(); }
+        function syncMinimapScroll() {
+            const viewport = document.getElementById('minimap-viewport');
+            const container = document.getElementById('minimap-container');
+            const visibleRatio = editor.clientHeight / (editor.scrollHeight || 1);
+            viewport.style.height = Math.max(10, container.clientHeight * visibleRatio) + 'px';
+            const scrollRatio = editor.scrollTop / (editor.scrollHeight - editor.clientHeight || 1);
+            const maxScrollTop = Math.max(0, container.clientHeight - viewport.clientHeight);
+            viewport.style.top = (scrollRatio * maxScrollTop) + 'px';
+        }
+        function handleMinimapClick(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const ratio = e.offsetY / rect.height;
+            editor.scrollTop = ratio * editor.scrollHeight;
+            editor.focus();
+        }
+
         function setValue(newVal) {
             editor.value = newVal; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = newVal;
-            saveDocsStateSilent(); updateStats(); renderTOC(); historyStack.push(newVal); redoStack = []; if(isMarkdownMode) renderMarkdown();
+            saveDocsStateSilent(); updateStats(); renderTOC(); updateMinimap(); historyStack.push(newVal); redoStack = []; if(isMarkdownMode) renderMarkdown();
         }
         function insertTextAtCursor(text, start, end, offset) { const val = editor.value; editor.value = val.substring(0, start) + text + val.substring(end); editor.selectionStart = start + offset; editor.selectionEnd = start + offset + (end - start); editor.dispatchEvent(new Event('input')); }
-        function actUndo() { if (historyStack.length > 1) { redoStack.push(historyStack.pop()); editor.value = historyStack[historyStack.length - 1]; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); if(isMarkdownMode) renderMarkdown(); } }
-        function actRedo() { if (redoStack.length > 0) { const next = redoStack.pop(); historyStack.push(next); editor.value = next; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); if(isMarkdownMode) renderMarkdown(); } }
+        function actUndo() { if (historyStack.length > 1) { redoStack.push(historyStack.pop()); editor.value = historyStack[historyStack.length - 1]; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); } }
+        function actRedo() { if (redoStack.length > 0) { const next = redoStack.pop(); historyStack.push(next); editor.value = next; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); } }
 
         function newDoc() { const newName = prompt('输入新文档名称：', '未命名文档'); if (newName === null) return; const id = Date.now(); docs.push({ id, title: newName.trim() || '未命名文档', content: '', snapshots: [] }); currentDocId = id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(id); updateDualSelectOptions(); }
-        function loadDoc(id) { currentDocId = id; sessionStorage.setItem('cute_current_doc', id); const doc = docs.find(d => d.id === id); if(!doc) return; editor.value = doc.content; historyStack = [doc.content]; redoStack = []; updateStats(); renderTOC(); if(isMarkdownMode) renderMarkdown(); saveDocsStateSilent(); renderDocsList(); renderTabs(); }
+        function loadDoc(id) { currentDocId = id; sessionStorage.setItem('cute_current_doc', id); const doc = docs.find(d => d.id === id); if(!doc) return; editor.value = doc.content; historyStack = [doc.content]; redoStack = []; updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); saveDocsStateSilent(); renderDocsList(); renderTabs(); }
         
         function clearAllDocs() { if(confirm('⚠️ 此操作不可逆！如果清空，建议先导出备份。')) { docs = [{ id: Date.now(), title: '默认文档', content: '', snapshots: [] }]; currentDocId = docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 已清空所有文档'); } }
         function actClear() { if(confirm('清空当前文本？(可在快照找回)')) setValue(''); }
@@ -837,25 +974,13 @@
         
         function updateStats() { 
             const t = editor.value; const total = t.length; 
-            
-            // 基础统计
             const cnCount = (t.match(/[\u4e00-\u9fa5]/g) || []).length;
             const enWordCount = (t.match(/[a-zA-Z]+/g) || []).length;
             const paraCount = t.length === 0 ? 0 : t.split(/\n+/).filter(p => p.trim().length > 0).length;
-
-            // 前端轻量 Token 估算
             const tokenEstimate = Math.ceil((cnCount * 1.5) + (enWordCount * 1.3) + ((total - cnCount - enWordCount) * 0.5));
-
-            document.getElementById('s-total').innerText = total; 
-            document.getElementById('s-cn').innerText = cnCount; 
-            document.getElementById('s-en').innerText = enWordCount; 
-            document.getElementById('s-token').innerText = tokenEstimate; 
-            document.getElementById('s-para').innerText = paraCount; 
-            
-            // 更新阅读时间 (按 300字/分钟 估算)
+            document.getElementById('s-total').innerText = total; document.getElementById('s-cn').innerText = cnCount; document.getElementById('s-en').innerText = enWordCount; document.getElementById('s-token').innerText = tokenEstimate; document.getElementById('s-para').innerText = paraCount; 
             const readTime = Math.max(1, Math.ceil(total / 300));
             document.getElementById('s-read-time').innerText = readTime + ' 分钟';
-
             const target = parseInt(document.getElementById('target-words').value) || 1; 
             document.getElementById('word-progress-fill').style.width = `${Math.min(100, (total / target) * 100)}%`; 
         }
