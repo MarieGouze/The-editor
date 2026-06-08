@@ -40,8 +40,10 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.2s, color 0.2s, border-color 0.2s; }
-        /* 界面主字体调整为纤细精致风格 */
         body { font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif; font-weight: 400; background-color: var(--bg-body); color: var(--text-main); line-height: 1.6; min-height: 100vh; padding: 20px; font-size: var(--font-size); overflow-x: hidden; letter-spacing: 0.3px; }
+
+        .mobile-topbar { display: none; }
+        .sidebar-overlay { display: none; }
 
         .access-bar { max-width: 1200px; margin: 0 auto 15px auto; padding: 12px 20px; background: var(--bg-panel); border-radius: 50px; box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
         .access-group { display: flex; gap: 12px; align-items: center; font-size: 14px; flex-wrap: wrap; }
@@ -74,7 +76,7 @@
 
         .app-layout { max-width: 1200px; margin: 0 auto; display: flex; gap: 20px; align-items: flex-start; transition: all 0.4s; }
         
-        .sidebar { width: 280px; flex-shrink: 0; background: var(--bg-panel); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: opacity 0.3s, transform 0.3s; display: flex; flex-direction: column; max-height: calc(100vh - 100px); overflow-y: auto; }
+        .sidebar { width: 280px; flex-shrink: 0; background: var(--bg-panel); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; max-height: calc(100vh - 100px); overflow-y: auto; }
         .sidebar h3 { font-size: 14px; margin-bottom: 12px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; font-weight: 600;}
         .doc-list { list-style: none; margin-bottom: 10px; overflow-y: auto; flex-shrink: 0; max-height: 22vh; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; padding-right: 4px; }
         .doc-item { padding: 8px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; background: var(--btn-bg); }
@@ -88,7 +90,6 @@
         .toc-item { padding: 4px 8px; cursor: pointer; color: var(--text-muted); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .toc-item:hover { background: var(--btn-bg); color: var(--primary); }
 
-        /* 低存在感定制滚动条 */
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(136, 136, 136, 0.15); border-radius: 4px; }
@@ -113,7 +114,6 @@
         .stat-item .label { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
         .scratchpad-container { display: flex; flex-direction: column; flex-grow: 1; min-height: 120px; margin-top: 15px; }
-        /* 暂存区：圆体加粗 */
         .scratchpad-container textarea { width: 100%; flex-grow: 1; border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; font-size: 12px; resize: none; background: var(--bg-body); color: var(--text-main); outline: none; transition: border-color 0.3s; font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'PingFang SC', sans-serif; font-weight: 600; letter-spacing: 0.5px;}
         .scratchpad-container textarea:focus { border-color: var(--primary); }
 
@@ -137,8 +137,8 @@
         .btn-punc { padding: 6px 12px; font-size: 15px; font-weight: 500; background: var(--bg-body); border: 1px solid var(--border-color); }
         
         .export-group { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); height: 34px;}
-        .export-group .btn { border-radius: 0; border: none; height: 100%;}
-        .export-group select { border: none; background: var(--btn-bg); color: var(--btn-text); padding: 0 10px; outline: none; cursor: pointer; border-left: 1px solid var(--border-color); font-family: inherit; font-weight: 500; transition: width 0.2s; height: 100%;}
+        .export-group .btn { border-radius: 0; border: none; height: 100%; padding: 0 8px; }
+.export-group select { border: none; background: var(--btn-bg); color: var(--btn-text); padding: 0 4px; outline: none; cursor: pointer; border-left: 1px solid var(--border-color); font-family: inherit; font-weight: 500; transition: width 0.2s; height: 100%;}
 
         .punc-toolbox { display: none; background: var(--btn-bg); border-radius: 8px; padding: 12px; margin-bottom: 12px; border: 1px dashed var(--primary); animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -161,18 +161,15 @@
         .editor-wrapper:focus-within { border-color: var(--primary); }
         .editor-wrapper.fullscreen { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 999; border-radius: 0; padding: 20px; display: flex; flex-direction: row; background: var(--bg-body); }
         
-        /* 核心编辑区：圆润且加粗 */
         textarea.main-ta { width: 100%; min-height: 450px; border: none; resize: vertical; padding: 20px 40px 20px 20px; font-size: var(--font-size); font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'PingFang SC', sans-serif; background: transparent; color: inherit; outline: none; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; transition: padding 0.4s, width 0.3s; }
         .fullscreen textarea.main-ta { flex-grow: 1; resize: none; min-height: 100%; }
 
-        /* 新增：长文档缩略图 (Minimap) - 独立右侧面板版 */
         .minimap-container { position: relative; width: 70px; flex-shrink: 0; background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; opacity: 0.4; transition: all 0.3s ease; cursor: pointer; user-select: none; margin-left: 5px; }
         .minimap-container:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: var(--primary); }
         .minimap-content { font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', sans-serif; font-size: 12px; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; white-space: pre-wrap; word-break: break-all; color: var(--text-muted); transform: scale(0.18); transform-origin: top left; width: 380px; padding: 10px; pointer-events: none; opacity: 0.7;}
         .minimap-viewport { position: absolute; top: 0; left: 0; width: 100%; background: var(--primary); opacity: 0.15; border-radius: 6px; pointer-events: none; transition: top 0.1s, opacity 0.2s; border: 1px solid var(--primary); box-sizing: border-box;}
         .minimap-container:hover .minimap-viewport { opacity: 0.3; }
 
-        /* 新增：Slash Command 菜单 */
         .slash-menu { position: absolute; display: none; background: var(--modal-bg); border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 6px; flex-direction: column; width: 180px; backdrop-filter: blur(8px); }
         .slash-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-main); transition: background 0.2s, color 0.2s; display: flex; align-items: center; gap: 8px; font-weight: 500;}
         .slash-item:hover, .slash-item.active { background: var(--primary); color: white; }
@@ -188,12 +185,10 @@
         .editor-wrapper.dual-mode .md-preview { display: none; }
         .dual-pane-header { padding: 8px 15px; border-bottom: 1px solid var(--border-color); background: var(--btn-bg); display: flex; justify-content: space-between; align-items: center; }
         .dual-pane-header select { padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-panel); color: var(--text-main); outline: none; font-weight: 500; width: 100%; font-family: inherit;}
-        /* 双屏副编辑区：圆润且加粗 */
         .dual-pane-container textarea { flex-grow: 1; border: none; resize: none; padding: 20px; font-size: var(--font-size); font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'PingFang SC', sans-serif; background: transparent; color: inherit; outline: none; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; }
 
         .typewriter-mode textarea.main-ta { padding-bottom: 50vh; padding-top: 10vh; }
 
-        /* 状态栏位置调整，避开右侧面板 */
         .status-indicator { position: absolute; bottom: 10px; right: 90px; font-size: 12px; color: var(--text-muted); opacity: 0.7; transition: opacity 0.3s, color 0.3s; pointer-events: none; z-index: 10; background: var(--bg-panel); padding: 2px 8px; border-radius: 10px;}
         .status-indicator.saving { color: var(--primary); font-weight: 600; opacity: 1; }
 
@@ -221,8 +216,9 @@
 
         .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; }
         .modal.show { display: flex; }
-        .modal-content { background: var(--bg-panel); padding: 25px; border-radius: var(--radius); width: 90%; max-width: 500px; box-shadow: var(--shadow); border: 1px solid var(--border-color); max-height: 80vh; display: flex; flex-direction: column;}
+        .modal-content { background: var(--bg-panel); padding: 25px; border-radius: var(--radius); width: 90%; max-width: 550px; box-shadow: var(--shadow); border: 1px solid var(--border-color); max-height: 85vh; display: flex; flex-direction: column; overflow-y: auto;}
         .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;}
+        .modal-footer { margin-top: auto; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; position: sticky; bottom: -25px; background: var(--bg-panel); margin-bottom: -25px; padding-bottom: 25px; z-index: 10; }
         
         .settings-group { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px dashed var(--border-color); }
         .settings-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
@@ -237,12 +233,21 @@
         .snapshot-info { font-size: 14px; }
         .snapshot-time { font-size: 12px; color: var(--text-muted); }
 
+        /* 移动端适配 */
         @media (max-width: 800px) {
-            .app-layout { flex-direction: column; }
-            .sidebar { width: 100%; position: static; max-height: none; }
-            body.zen-mode .sidebar { display: none; }
+            .mobile-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-panel); margin-bottom: 15px; border-radius: var(--radius); box-shadow: var(--shadow); }
+            .sidebar { position: fixed; top: 0; left: -320px; width: 280px; height: 100vh; z-index: 10001; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 0; max-height: none; padding-bottom: 40px; box-shadow: none; overflow-y: auto;}
+            .sidebar.show { left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.15); }
+            .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 10000; backdrop-filter: blur(2px); transition: opacity 0.3s; opacity: 0; }
+            .sidebar-overlay.show { display: block; opacity: 1; }
+            
+            .sidebar .access-bar, .sidebar .toolbar-panel { background: transparent; box-shadow: none; border-radius: 0; padding: 10px 0; margin: 10px 0; border: none; }
+            .sidebar .access-bar { border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; flex-direction: column; align-items: flex-start;}
+            .sidebar .toolbar-panel { border-top: 1px dashed var(--border-color); padding-top: 15px; }
+            .sidebar .toolbar-panel:first-of-type { border-top: none; margin-top: 0; }
+
+            .app-layout { flex-direction: column; gap: 0;}
             textarea.main-ta { min-height: 300px; }
-            .access-bar { flex-direction: column; align-items: flex-start; border-radius: 16px; }
             .editor-wrapper.split-mode { flex-direction: column; }
             .editor-wrapper.split-mode textarea.main-ta, .editor-wrapper.split-mode .md-preview { width: 100%; min-height: 300px; border-left: none; border-top: 1px dashed var(--border-color); }
             .editor-wrapper.dual-mode { flex-direction: column; }
@@ -250,30 +255,11 @@
             .fr-row { flex-direction: column; align-items: stretch; }
             .minimap-container { display: none; }
         }
-		/* 手机端 TG 悬浮按钮样式 */
+
         .btn-mobile-tg {
-            display: none;
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            background: var(--primary);
-            color: white;
-            font-size: 20px;
-            border: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 50px; height: 50px; border-radius: 25px; background: var(--primary); color: white; font-size: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; justify-content: center;
         }
-        /* 只有在小屏幕（手机）下才显示 */
-        @media (max-width: 800px) {
-            .btn-mobile-tg {
-                display: flex;
-            }
-        }
+        @media (max-width: 800px) { .btn-mobile-tg { display: flex; } }
     </style>
 </head>
 <body>
@@ -303,25 +289,35 @@
                 <span>☁️ 云端同步与集成</span>
                 <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="closeSyncModal()">✖ 关闭</button>
             </div>
+            
             <div class="settings-group">
                 <div class="settings-label">1. WebDAV 私有云同步</div>
                 <div class="settings-desc">配置 WebDAV 服务器，实现多端 JSON 数据双向同步。</div>
                 <input type="text" class="settings-input" id="dav-url" placeholder="URL (例: https://dav.yoursite.com/)">
                 <input type="text" class="settings-input" id="dav-user" placeholder="用户名 Username">
                 <input type="password" class="settings-input" id="dav-pass" placeholder="密码 Password">
-                <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <button class="btn" style="flex:1;" onclick="webdavPush()">⬆️ 推送本地到云</button>
-                    <button class="btn" style="flex:1;" onclick="webdavPull()">⬇️ 从云端覆盖本地</button>
+                
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="btn" style="flex:1;" onclick="testWebdavConnection()">🔗 测试连接</button>
+                    <button class="btn" style="flex:1;" onclick="webdavPush()">⬆️ 推送云端</button>
+                    <button class="btn" style="flex:1;" onclick="webdavPull()">⬇️ 云端覆盖</button>
                 </div>
             </div>
-            <div class="settings-group">
-                <div class="settings-label">2. Telegram Bot 闪念推送</div>
+
+            <div class="settings-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="settings-label">2. Telegram Bot 配置</div>
                 <div class="settings-desc">按下 <kbd>Alt + S</kbd> 快速将选中文本/全文发送到你的 TG。</div>
                 <input type="text" class="settings-input" id="tg-token" placeholder="Bot Token (例: 123456:ABC-DEF...)">
                 <input type="text" class="settings-input" id="tg-chatid" placeholder="Chat ID (你的专属 ID)">
-                <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                    <button class="btn" style="background: var(--primary); color: white;" onclick="saveIntegrationConfig()">💾 保存所有配置</button>
+                <input type="text" class="settings-input" id="tg-title" placeholder="可选：自定义标题 (留空默认本文档名称)" style="margin-top: 10px;">
+
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                    <button class="btn" style="flex:1;" onclick="testTgConnection()">🔗 测试连接</button>
                 </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn" style="background: var(--primary); color: white; width: 100%;" onclick="saveIntegrationConfig(true)">💾 仅保存配置</button>
             </div>
         </div>
     </div>
@@ -354,9 +350,16 @@
         </div>
     </div>
 
-    <div class="access-bar">
+    <div class="mobile-topbar">
+        <button class="btn" style="background:var(--primary); color:white;" onclick="toggleSidebar()">🍔 菜单与工具</button>
+        <span style="font-weight: 600; color: var(--primary);">喵喵编辑器</span>
+        <button class="btn" onclick="saveDocsStateSilent()">💾 保存</button>
+    </div>
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div class="access-bar" id="desktop-access-bar">
         <div class="access-group">
-            <button class="btn" style="margin-right: 5px; border-radius: 20px;" onclick="openSyncModal()" title="WebDAV 同步与 TG 推送">☁️ 云端/TG</button>
+            <button class="btn" style="margin-right: 5px; border-radius: 20px;" onclick="openSyncModal()" title="WebDAV 同步与 TG 账号配置">☁️ 云端/TG</button>
             <label class="toggle-label" id="lbl-zen"><input type="checkbox" onchange="toggleZenMode(this)"> 🧘 禅模式</label>
             <label class="toggle-label" id="lbl-typewriter"><input type="checkbox" onchange="toggleTypewriter(this)"> 🖨️ 打字机模式</label>
             <label class="toggle-label" id="lbl-markdown"><input type="checkbox" onchange="toggleMarkdown(this)"> 📝 MD预览</label>
@@ -404,8 +407,8 @@
     </div>
 
     <div class="app-layout">
-        <aside class="sidebar">
-            <h3>📂 文档列表 
+        <aside class="sidebar" id="sidebar-drawer">
+            <h3 style="margin-top: 5px;">📂 文档列表 
                 <div style="display: flex; gap: 5px;">
                     <button class="btn" style="padding: 4px 8px; font-size: 12px;" onclick="newDoc()">+ 新建</button>
                     <button class="btn" style="padding: 4px 8px; font-size: 12px; background:var(--bg-panel);" onclick="openTrashModal()" title="回收站">🗑️</button>
@@ -464,7 +467,7 @@
             
             <div class="tabs-bar" id="tabs-bar-ui"></div>
 
-            <div class="toolbar-panel">
+            <div class="toolbar-panel" id="toolbar-primary">
                 <div class="toolbar-header">
                     <span class="toolbar-title">✨ 极速编辑区</span>
                     <div>
@@ -532,10 +535,23 @@
                             <option value="pdf">.pdf</option>
                             <option value="jpg">.jpg</option>
                             <option value="docx">.docx</option>
-                            <option value="zip">.zip(全库)</option>
+                            <option value="zip">.zip</option>
                         </select>
                     </div>
-					<button class="btn" style="color: #0088cc;" onclick="sendToTelegram()">✈️</button>
+
+                    <div class="export-group" style="border-color: #8bcdef;">
+                        <button class="btn" style="color: #0088cc; font-weight: bold;" onclick="sendToTelegramFromDropdown()">✈️</button>
+                        <select id="quick-tg-format" style="color: #0088cc; padding: 0 2px;">
+                            <option value="txt">.txt</option>
+                            <option value="md">.md</option>
+                            <option value="html">.html</option>
+                            <option value="pdf">.pdf</option>
+                            <option value="jpg">.jpg</option>
+                            <option value="docx">.docx</option>
+                            <option value="zip">.zip</option>
+                        </select>
+                    </div>
+
                     <button class="btn btn-danger" onclick="actClear()">🗑️ 清空</button>
                 </div>
             </div>
@@ -562,7 +578,7 @@
                 <div class="status-indicator" id="save-status">[ 就绪 ]</div>
             </div>
 
-            <div class="toolbar-panel">
+            <div class="toolbar-panel" id="toolbar-secondary">
                 <div class="toolbar-title" style="margin-bottom: 10px;">🛠️ 文本整理 (作用于左侧主区)</div>
                 <div class="btn-group">
                     <button class="btn" onclick="fmtTrimSpaces()">清除多余空格</button>
@@ -578,19 +594,15 @@
         </main>
     </div>
 	
-	<button class="btn-mobile-tg" onclick="sendToTelegram()" title="发送至 TG">✈️</button>
+    <button class="btn-mobile-tg" onclick="sendToTelegram('text')" title="推送纯文本">✈️</button>
 
     <script>
-        // 极简规范的 PWA 注册方式
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-            .then(reg => console.log('✅ ServiceWorker 注册成功'))
-            .catch(err => console.error('❌ ServiceWorker 注册失败: ', err));
-    });
-}
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.error('❌ ServiceWorker 失败: ', err));
+            });
+        }
 
-        // ================= 核心状态管理 =================
         const DOCS_KEY = 'cute_editor_docs_v4';
         const TRASH_KEY = 'cute_editor_trash';
         const CONFIG_KEY = 'cute_editor_integrations';
@@ -607,6 +619,39 @@ if ('serviceWorker' in navigator) {
         const mdPreviewPane = document.getElementById('md-preview-pane');
         const statusIndicator = document.getElementById('save-status');
         const scratchpad = document.getElementById('scratchpad');
+
+        function adaptMobileUI() {
+            const isMobile = window.innerWidth <= 800;
+            const sidebar = document.getElementById('sidebar-drawer');
+            const accessBar = document.getElementById('desktop-access-bar');
+            const tb1 = document.getElementById('toolbar-primary');
+            const tb2 = document.getElementById('toolbar-secondary');
+            const mainArea = document.getElementById('main-area');
+            const editorWrap = document.getElementById('editor-wrap');
+
+            if (isMobile) {
+                if (!sidebar.contains(accessBar)) {
+                    sidebar.insertBefore(accessBar, sidebar.firstChild);
+                    sidebar.appendChild(tb1);
+                    sidebar.appendChild(tb2);
+                }
+            } else {
+                if (sidebar.contains(accessBar)) {
+                    const layout = document.querySelector('.app-layout');
+                    layout.parentNode.insertBefore(accessBar, layout);
+                    mainArea.insertBefore(tb1, editorWrap);
+                    mainArea.appendChild(tb2);
+                }
+                sidebar.classList.remove('show');
+                document.getElementById('sidebar-overlay')?.classList.remove('show');
+            }
+        }
+        window.addEventListener('resize', adaptMobileUI);
+
+        function toggleSidebar() {
+            document.getElementById('sidebar-drawer').classList.toggle('show');
+            document.getElementById('sidebar-overlay').classList.toggle('show');
+        }
 
         window.onload = () => {
             const savedData = localStorage.getItem(DOCS_KEY);
@@ -626,6 +671,7 @@ if ('serviceWorker' in navigator) {
             renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions();
             updateExportWidth(document.getElementById('export-format'));
             editor.focus();
+            adaptMobileUI();
         };
 
         window.addEventListener('storage', (e) => {
@@ -669,24 +715,13 @@ if ('serviceWorker' in navigator) {
             }, 800);
         }
 
-        // ================= 回收站逻辑 (软删除) =================
         function saveTrashState() { localStorage.setItem(TRASH_KEY, JSON.stringify(trashDocs)); }
         function openTrashModal() { renderTrashList(); document.getElementById('trash-modal').classList.add('show'); }
         function closeTrashModal(e) { if(e) e.stopPropagation(); document.getElementById('trash-modal').classList.remove('show'); }
         function renderTrashList() {
             const ul = document.getElementById('trash-list-ui');
             if(trashDocs.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">回收站为空</li>'; return; }
-            ul.innerHTML = trashDocs.map((doc, i) => `
-                <li class="snapshot-item">
-                    <div>
-                        <div class="snapshot-info">📄 ${doc.title}</div>
-                        <div class="snapshot-time">删除时间: ${doc.deletedAt || '未知'} | 字数: ${doc.content.length}</div>
-                    </div>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn" style="padding: 4px 8px;" onclick="restoreFromTrash(${i})">恢复</button>
-                    </div>
-                </li>
-            `).join('');
+            ul.innerHTML = trashDocs.map((doc, i) => `<li class="snapshot-item"><div><div class="snapshot-info">📄 ${doc.title}</div><div class="snapshot-time">删除时间: ${doc.deletedAt || '未知'} | 字数: ${doc.content.length}</div></div><div style="display:flex; gap:5px;"><button class="btn" style="padding: 4px 8px;" onclick="restoreFromTrash(${i})">恢复</button></div></li>`).join('');
         }
         function restoreFromTrash(index) {
             const doc = trashDocs[index]; trashDocs.splice(index, 1); delete doc.deletedAt; docs.push(doc); 
@@ -708,7 +743,6 @@ if ('serviceWorker' in navigator) {
             }
         }
 
-        // ================= 查找替换 =================
         let currentSearchMatches = [];
         function toggleFindReplace() { const p = document.getElementById('find-replace-panel'); if(p.style.display === 'flex') { p.style.display = 'none'; document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; editor.focus(); } else { p.style.display = 'flex'; document.getElementById('find-input').focus(); } }
         function doFindNext() { const q = document.getElementById('find-input').value; if(!q) return; let i = editor.value.indexOf(q, editor.selectionEnd); if (i === -1) i = editor.value.indexOf(q, 0); if (i !== -1) { editor.focus(); editor.setSelectionRange(i, i + q.length); } else showToast('❌ 未找到'); }
@@ -740,7 +774,6 @@ if ('serviceWorker' in navigator) {
             if (replaceCount > 0) { setValue(content); showToast(`✅ 替换 ${replaceCount} 处`); doSearchList(); }
         }
 
-        // ================= 编辑器核心、缩略图、Snippets、Slash =================
         function toggleDualMode(cb) {
             const wrap = document.getElementById('editor-wrap'); const mdLbl = document.getElementById('lbl-markdown'); const mdCb = mdLbl.querySelector('input');
             isDualMode = cb.checked;
@@ -766,7 +799,6 @@ if ('serviceWorker' in navigator) {
         editor.addEventListener('keyup', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
         editor.addEventListener('click', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
 
-        // 自定义文本片段词典
         const customSnippets = {
             '/date': () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
             '/time': () => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; },
@@ -774,14 +806,10 @@ if ('serviceWorker' in navigator) {
             ';;todo': () => "- [ ] "
         };
 
-        let isSlashActive = false;
-        let slashStartPos = -1;
-        let slashIndex = 0;
+        let isSlashActive = false; let slashStartPos = -1; let slashIndex = 0;
 
         editor.addEventListener('input', (e) => {
             const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value;
-            
-            // 检测 Snippets 快捷展开
             const textBeforeCursor = editor.value.substring(0, editor.selectionStart);
             for (const [key, getVal] of Object.entries(customSnippets)) {
                 if (textBeforeCursor.endsWith(key)) {
@@ -792,8 +820,6 @@ if ('serviceWorker' in navigator) {
                     break;
                 }
             }
-
-            // 检测 Slash Command 触发
             if (e.data === '/') {
                 const charBefore = editor.value.charAt(editor.selectionStart - 2);
                 if (!charBefore || charBefore === '\n' || charBefore === ' ') openSlashMenu();
@@ -806,12 +832,9 @@ if ('serviceWorker' in navigator) {
             clearTimeout(historyTimeout); historyTimeout = setTimeout(() => { renderTOC(); if (historyStack[historyStack.length - 1] !== editor.value) { historyStack.push(editor.value); redoStack = []; if (historyStack.length > 50) historyStack.shift(); } }, 800); 
         });
 
-        // Slash Command 菜单控制
         function openSlashMenu() {
             isSlashActive = true; slashStartPos = editor.selectionStart - 1; slashIndex = 0;
             const menu = document.getElementById('slash-menu');
-            
-            // 获取光标大致位置
             const wrapRect = document.getElementById('editor-wrap').getBoundingClientRect();
             const mirror = document.createElement('div');
             const style = window.getComputedStyle(editor);
@@ -820,7 +843,6 @@ if ('serviceWorker' in navigator) {
             mirror.textContent = editor.value.substring(0, editor.selectionStart);
             const span = document.createElement('span'); span.textContent = '|'; mirror.appendChild(span);
             document.body.appendChild(mirror);
-            
             let top = span.offsetTop - editor.scrollTop + wrapRect.top;
             let left = span.offsetLeft - editor.scrollLeft + wrapRect.left;
             document.body.removeChild(mirror);
@@ -833,18 +855,9 @@ if ('serviceWorker' in navigator) {
         function closeSlashMenu() { isSlashActive = false; document.getElementById('slash-menu').style.display = 'none'; }
         function updateSlashSelect() {
             const items = document.querySelectorAll('.slash-item');
-            items.forEach((item, i) => {
-                if(i === slashIndex) item.classList.add('active'); else item.classList.remove('active');
-            });
+            items.forEach((item, i) => { if(i === slashIndex) item.classList.add('active'); else item.classList.remove('active'); });
         }
-        
-        // 绑定 Slash Menu 点击事件
-        document.querySelectorAll('.slash-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                execSlash(item.getAttribute('data-cmd'));
-            });
-        });
+        document.querySelectorAll('.slash-item').forEach(item => { item.addEventListener('click', (e) => { e.preventDefault(); execSlash(item.getAttribute('data-cmd')); }); });
 
         function execSlash(cmd) {
             const cmds = { 'h1': '# ', 'h2': '## ', 'h3': '### ', 'todo': '- [ ] ', 'quote': '> ', 'line': '---\n', 'code': '```\n\n```\n' };
@@ -853,13 +866,10 @@ if ('serviceWorker' in navigator) {
             const after = editor.value.substring(editor.selectionEnd);
             editor.value = before + insertStr + after;
             editor.selectionStart = editor.selectionEnd = before.length + insertStr.length - (cmd === 'code' ? 5 : 0);
-            
-            closeSlashMenu(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown();
-            editor.focus();
+            closeSlashMenu(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); editor.focus();
         }
 
         editor.addEventListener('keydown', function(e) {
-            // 劫持 Slash 菜单的按键
             if (isSlashActive) {
                 const totalItems = document.querySelectorAll('.slash-item').length;
                 if (e.key === 'ArrowDown') { e.preventDefault(); slashIndex = (slashIndex + 1) % totalItems; updateSlashSelect(); return; }
@@ -867,15 +877,12 @@ if ('serviceWorker' in navigator) {
                 if (e.key === 'Enter') { e.preventDefault(); document.querySelectorAll('.slash-item')[slashIndex].click(); return; }
                 if (e.key === 'Escape' || e.key === 'Backspace' && editor.selectionStart <= slashStartPos + 1) { closeSlashMenu(); }
             }
-
             const start = this.selectionStart; const end = this.selectionEnd; const selected = this.value.substring(start, end);
             
-            // 行级快捷键 Alt + Up/Down
             if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
                 e.preventDefault();
                 const lines = this.value.split('\n');
                 let currentLineIndex = this.value.substr(0, start).split('\n').length - 1;
-                
                 if (e.key === 'ArrowUp' && currentLineIndex > 0) {
                     const temp = lines[currentLineIndex]; lines[currentLineIndex] = lines[currentLineIndex - 1]; lines[currentLineIndex - 1] = temp;
                     const newText = lines.join('\n'); const offsetStart = newText.split('\n').slice(0, currentLineIndex - 1).join('\n').length + (currentLineIndex > 1 ? 1 : 0);
@@ -889,7 +896,8 @@ if ('serviceWorker' in navigator) {
                 return;
             }
 
-            if (e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); sendToTelegram(); return; }
+            // Alt+S 强制发送纯文本
+            if (e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); sendToTelegram('text'); return; }
             if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'i')) {
                 e.preventDefault(); const char = e.key.toLowerCase() === 'b' ? '**' : '*';
                 if (selected) insertTextAtCursor(`${char}${selected}${char}`, start, end, char.length); else insertTextAtCursor(`${char}${char}`, start, end, char.length); return;
@@ -898,7 +906,6 @@ if ('serviceWorker' in navigator) {
             if (selected && wrapPairs[e.key]) { e.preventDefault(); insertTextAtCursor(`${e.key}${selected}${wrapPairs[e.key]}`, start, end, 1); }
         });
 
-        // 全局点击关闭 Slash 菜单
         document.addEventListener('click', (e) => { if (isSlashActive && e.target.id !== 'main-input') closeSlashMenu(); });
 
         let isSyncingLeft = false;
@@ -910,7 +917,6 @@ if ('serviceWorker' in navigator) {
             setTimeout(() => isSyncingLeft = false, 20);
         });
 
-        // Minimap 逻辑
         function updateMinimap() { document.getElementById('minimap-content').textContent = editor.value; syncMinimapScroll(); }
         function syncMinimapScroll() {
             const viewport = document.getElementById('minimap-viewport');
@@ -921,12 +927,7 @@ if ('serviceWorker' in navigator) {
             const maxScrollTop = Math.max(0, container.clientHeight - viewport.clientHeight);
             viewport.style.top = (scrollRatio * maxScrollTop) + 'px';
         }
-        function handleMinimapClick(e) {
-            const rect = e.currentTarget.getBoundingClientRect();
-            const ratio = e.offsetY / rect.height;
-            editor.scrollTop = ratio * editor.scrollHeight;
-            editor.focus();
-        }
+        function handleMinimapClick(e) { const rect = e.currentTarget.getBoundingClientRect(); const ratio = e.offsetY / rect.height; editor.scrollTop = ratio * editor.scrollHeight; editor.focus(); }
 
         function setValue(newVal) {
             editor.value = newVal; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = newVal;
@@ -938,7 +939,6 @@ if ('serviceWorker' in navigator) {
 
         function newDoc() { const newName = prompt('输入新文档名称：', '未命名文档'); if (newName === null) return; const id = Date.now(); docs.push({ id, title: newName.trim() || '未命名文档', content: '', snapshots: [] }); currentDocId = id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(id); updateDualSelectOptions(); }
         function loadDoc(id) { currentDocId = id; sessionStorage.setItem('cute_current_doc', id); const doc = docs.find(d => d.id === id); if(!doc) return; editor.value = doc.content; historyStack = [doc.content]; redoStack = []; updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); saveDocsStateSilent(); renderDocsList(); renderTabs(); }
-        
         function clearAllDocs() { if(confirm('⚠️ 此操作不可逆！如果清空，建议先导出备份。')) { docs = [{ id: Date.now(), title: '默认文档', content: '', snapshots: [] }]; currentDocId = docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 已清空所有文档'); } }
         function actClear() { if(confirm('清空当前文本？(可在快照找回)')) setValue(''); }
         function renameDocPrompt(id) { const doc = docs.find(d => d.id === id); const newName = prompt('输入新文档名称：', doc.title); if(newName && newName.trim()) { doc.title = newName.trim(); saveDocsStateSilent(); renderDocsList(); renderTabs(); updateDualSelectOptions(); } }
@@ -948,7 +948,7 @@ if ('serviceWorker' in navigator) {
         function renderTOC() { const lines = editor.value.split('\n'); let html = ''; lines.forEach((line, index) => { const match = line.match(/^(#{1,6})\s+(.+)$/); if(match) { html += `<div class="toc-item" style="padding-left: ${(match[1].length-1)*12}px" onclick="scrollToLine(${index})" title="${match[2]}">${match[2]}</div>`; } }); document.getElementById('toc-list').innerHTML = html || '<div style="color:var(--text-muted); font-size:12px; text-align:center;">暂无标题 (# 触发)</div>'; }
         function scrollToLine(lineIndex) { const lines = editor.value.split('\n'); let chars = 0; for(let i=0; i<lineIndex; i++) chars += lines[i].length + 1; editor.focus(); editor.setSelectionRange(chars, chars); editor.blur(); editor.focus(); }
 
-        const baseCommands = [ { name: "新建文档", shortcut: "New", action: newDoc }, { name: "清空当前内容", shortcut: "Clear", action: actClear }, { name: "打开历史快照", shortcut: "Snap", action: openSnapshotModal }, { name: "发送至 Telegram", shortcut: "Alt+S", action: sendToTelegram }, { name: "打开云同步设置", action: openSyncModal }, { name: "打开查找替换面板", action: toggleFindReplace }, { name: "打开回收站", action: openTrashModal } ];
+        const baseCommands = [ { name: "新建文档", shortcut: "New", action: newDoc }, { name: "清空当前内容", shortcut: "Clear", action: actClear }, { name: "打开历史快照", shortcut: "Snap", action: openSnapshotModal }, { name: "发送至 Telegram (纯文本)", shortcut: "Alt+S", action: () => sendToTelegram('text') }, { name: "打开查找替换面板", action: toggleFindReplace }, { name: "打开回收站", action: openTrashModal } ];
         let cmdSelectedIndex = 0; let filteredItems = [];
         
         document.addEventListener('keydown', (e) => {
@@ -985,15 +985,144 @@ if ('serviceWorker' in navigator) {
         function selectCmd(index) { if (index < 0) index = filteredItems.length - 1; if (index >= filteredItems.length) index = 0; cmdSelectedIndex = index; updateCmdDOM(); document.querySelector('.cmd-item.selected')?.scrollIntoView({block: 'nearest'});}
 
         // ================= 云端同步与 TG =================
-        function openSyncModal() { const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); document.getElementById('dav-url').value = conf.davUrl || ''; document.getElementById('dav-user').value = conf.davUser || ''; document.getElementById('dav-pass').value = conf.davPass || ''; document.getElementById('tg-token').value = conf.tgToken || ''; document.getElementById('tg-chatid').value = conf.tgChatId || ''; document.getElementById('sync-settings-modal').classList.add('show'); }
+        function openSyncModal() { 
+            const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); 
+            document.getElementById('dav-url').value = conf.davUrl || ''; 
+            document.getElementById('dav-user').value = conf.davUser || ''; 
+            document.getElementById('dav-pass').value = conf.davPass || ''; 
+            document.getElementById('tg-token').value = conf.tgToken || ''; 
+            document.getElementById('tg-chatid').value = conf.tgChatId || ''; 
+            document.getElementById('tg-title').value = ''; 
+            document.getElementById('sync-settings-modal').classList.add('show'); 
+        }
         function closeSyncModal(e) { if(e) e.stopPropagation(); document.getElementById('sync-settings-modal').classList.remove('show'); }
-        function saveIntegrationConfig() { localStorage.setItem(CONFIG_KEY, JSON.stringify({ davUrl: document.getElementById('dav-url').value.trim(), davUser: document.getElementById('dav-user').value.trim(), davPass: document.getElementById('dav-pass').value, tgToken: document.getElementById('tg-token').value.trim(), tgChatId: document.getElementById('tg-chatid').value.trim() })); showToast('✅ 配置已保存'); closeSyncModal(); }
+        
+        function saveIntegrationConfig(showMsg = true) { 
+            localStorage.setItem(CONFIG_KEY, JSON.stringify({ 
+                davUrl: document.getElementById('dav-url').value.trim(), 
+                davUser: document.getElementById('dav-user').value.trim(), 
+                davPass: document.getElementById('dav-pass').value, 
+                tgToken: document.getElementById('tg-token').value.trim(), 
+                tgChatId: document.getElementById('tg-chatid').value.trim()
+            })); 
+            if(showMsg) showToast('✅ 配置已存'); 
+        }
+        
         function getBasicAuthHeader(user, pass) { return 'Basic ' + btoa(encodeURIComponent(user + ':' + pass).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1))); }
-        function getWebdavEndpoint() { const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); if(!conf.davUrl) return null; return { url: (conf.davUrl.endsWith('/') ? conf.davUrl : conf.davUrl + '/') + 'meow_editor_sync.json', user: conf.davUser, pass: conf.davPass }; }
+        function getWebdavEndpoint() { const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); if(!conf.davUrl) return null; return { url: (conf.davUrl.endsWith('/') ? conf.davUrl : conf.davUrl + '/') + 'meow_editor_sync.json', user: conf.davUser, pass: conf.davPass, baseUrl: conf.davUrl }; }
 
-        async function webdavPush() { const info = getWebdavEndpoint(); if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); try { showToast('⬆️ 推送中...'); const res = await fetch(info.url, { method: 'PUT', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass), 'Content-Type': 'application/json' }, body: JSON.stringify({ list: docs, current: currentDocId }) }); if(res.ok || res.status === 201 || res.status === 204) showToast('✅ 成功推送到私有云'); else showToast(`❌ 推送失败: HTTP ${res.status}`); } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } }
-        async function webdavPull() { const info = getWebdavEndpoint(); if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); if(!confirm('⚠️ 拉取云端数据将【完全覆盖】本地所有文档！确定吗？')) return; try { showToast('⬇️ 拉取中...'); const res = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) }, cache: 'no-store' }); if(res.ok) { const data = await res.json(); if(data && data.list) { docs = data.list; currentDocId = data.current || docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 成功覆盖本地'); closeSyncModal(); } else showToast('❌ 数据格式错误'); } else if (res.status === 404) showToast('⚠️ 云端无文件'); else showToast(`❌ 失败: HTTP ${res.status}`); } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } }
-        async function sendToTelegram() { const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); if(!conf.tgToken || !conf.tgChatId) return showToast('⚠️ 请先配置 TG Bot'); let text = editor.value.substring(editor.selectionStart, editor.selectionEnd) || editor.value; if(!text) return showToast('⚠️ 当前无内容'); showToast('✈️ 推送 Telegram...'); try { const res = await fetch(`https://api.telegram.org/bot${conf.tgToken}/sendMessage`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chat_id: conf.tgChatId, text: text, parse_mode: 'HTML' }) }); if(res.ok) showToast('✅ 发送成功'); else showToast(`❌ 发送失败`); } catch(e) { showToast('❌ 发送失败，查网络'); } }
+        async function testWebdavConnection() {
+            saveIntegrationConfig(false);
+            const info = getWebdavEndpoint();
+            if(!info) return showToast('⚠️ 请先填写 WebDAV URL');
+            showToast('🔗 测试 WebDAV 连通性...');
+            try {
+                const res = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) } });
+                if (res.ok || res.status === 404) showToast('✅ 连通成功 (账号验证通过)');
+                else if (res.status === 401 || res.status === 403) showToast('❌ 认证失败 (账号或密码错误)');
+                else showToast(`⚠️ 异常状态码: HTTP ${res.status}`);
+            } catch(e) { showToast('❌ 网络连接错误或跨域(CORS)拦截'); }
+        }
+
+        async function webdavPush() { 
+            saveIntegrationConfig(false);
+            const info = getWebdavEndpoint(); 
+            if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); 
+            try { 
+                showToast('⬆️ 推送中...'); 
+                const res = await fetch(info.url, { method: 'PUT', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass), 'Content-Type': 'application/json' }, body: JSON.stringify({ list: docs, current: currentDocId }) }); 
+                if(res.ok || res.status === 201 || res.status === 204) {
+                    showToast('✅ 成功推送到私有云'); 
+                    closeSyncModal();
+                } else { showToast(`❌ 推送失败: HTTP ${res.status}`); }
+            } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } 
+        }
+
+        async function webdavPull() { 
+            saveIntegrationConfig(false);
+            const info = getWebdavEndpoint(); 
+            if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); 
+            if(!confirm('⚠️ 拉取云端数据将【完全覆盖】本地所有文档！确定吗？')) return; 
+            try { 
+                showToast('⬇️ 拉取中...'); 
+                const res = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) }, cache: 'no-store' }); 
+                if(res.ok) { 
+                    const data = await res.json(); 
+                    if(data && data.list) { docs = data.list; currentDocId = data.current || docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 成功覆盖本地'); closeSyncModal(); } else showToast('❌ 数据格式错误'); 
+                } else if (res.status === 404) showToast('⚠️ 云端无备份文件'); else showToast(`❌ 拉取失败: HTTP ${res.status}`); 
+            } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } 
+        }
+
+        async function testTgConnection() {
+            saveIntegrationConfig(false);
+            const token = document.getElementById('tg-token').value.trim();
+            const chatId = document.getElementById('tg-chatid').value.trim();
+            if(!token || !chatId) return showToast('⚠️ 请先填写 Token 和 Chat ID');
+            showToast('🔗 测试 TG 连通性...');
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${token}/getChat?chat_id=${chatId}`);
+                const data = await res.json();
+                if(data.ok) showToast(`✅ 连通成功！目标：${data.result.title || data.result.username || data.result.first_name}`);
+                else showToast(`❌ 失败: ${data.description}`);
+            } catch(e) { showToast('❌ 网络连接错误'); }
+        }
+
+        function sendToTelegramFromDropdown() {
+            const format = document.getElementById('quick-tg-format').value;
+            sendToTelegram(format);
+        }
+
+        async function sendToTelegram(overrideFormat = null) { 
+            saveIntegrationConfig(false);
+            const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); 
+            if(!conf.tgToken || !conf.tgChatId) {
+                openSyncModal();
+                return showToast('⚠️ 请先配置 TG Bot Token 和 Chat ID'); 
+            }
+            
+            let text = editor.value.substring(editor.selectionStart, editor.selectionEnd);
+            let isSelection = !!text;
+            if(!text) text = editor.value; 
+            if(!text && docs.length <= 1) return showToast('⚠️ 当前无内容可发');
+
+            const customTitle = document.getElementById('tg-title')?.value.trim();
+            const doc = docs.find(d => d.id === currentDocId);
+            let title = customTitle || doc?.title || '未命名文档';
+            if(isSelection) title += ' (选中片段)';
+            
+            const format = overrideFormat || 'text';
+
+            showToast(`✈️ 推送 Telegram (${format})...`); 
+            try { 
+                if (format === 'text') {
+                    const finalMsg = `<b>${title}</b>\n\n${text}`;
+                    const res = await fetch(`https://api.telegram.org/bot${conf.tgToken}/sendMessage`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chat_id: conf.tgChatId, text: finalMsg, parse_mode: 'HTML' }) }); 
+                    if(res.ok) { showToast('✅ 文本发送成功'); } else showToast(`❌ 发送失败`); 
+                } else {
+                    const formData = new FormData();
+                    formData.append('chat_id', conf.tgChatId);
+                    formData.append('caption', `📄 ${title}`);
+                    let blob; let filename = `${title}.${format}`;
+
+                    if (format === 'txt') {
+                        blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                    } else if (format === 'md') {
+                        blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+                    } else if (format === 'zip') {
+                        showToast('📦 打包 ZIP...');
+                        const zip = new JSZip();
+                        if (isSelection) { zip.file(`${title}.txt`, text); } 
+                        else { docs.forEach(d => { let name = d.title.replace(/[\\/:*?"<>|]/g, "_") || '未命名'; zip.file(`${name}.md`, d.content); }); }
+                        blob = await zip.generateAsync({type:"blob"});
+                        filename = `编辑器全库备份_${new Date().toISOString().slice(0,10)}.zip`;
+                    }
+                    formData.append('document', blob, filename);
+
+                    const res = await fetch(`https://api.telegram.org/bot${conf.tgToken}/sendDocument`, { method: 'POST', body: formData });
+                    if(res.ok) { showToast('✅ 文件发送成功'); } else showToast(`❌ 文件发送失败`); 
+                }
+            } catch(e) { showToast('❌ 发送失败，请检查网络'); } 
+        }
 
         function showToast(msg) { const t = document.getElementById('sys-toast'); t.innerText = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2500); }
         function togglePuncBox() { const box = document.getElementById('punc-box'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
