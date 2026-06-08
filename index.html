@@ -83,11 +83,11 @@
         .doc-item:hover { background: var(--border-color); }
         .doc-item.active { background: var(--primary); color: #fff; font-weight: 600; }
         .doc-item .doc-del { opacity: 0; cursor: pointer; color: inherit; font-weight: normal; }
-        .doc-item:hover .doc-del { opacity: 0.7; }
-        .doc-item .doc-del:hover { opacity: 1; color: #ffeb3b; }
+        @media (hover: hover) { .doc-item:hover .doc-del { opacity: 0.7; } .doc-item .doc-del:hover { opacity: 1; color: #ffeb3b; } }
+        @media (hover: none) { .doc-item .doc-del { opacity: 0.7; } }
 
         .toc-panel { max-height: 35vh; min-height: 60px; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; font-size: 13px; padding-right: 4px; }
-        .toc-item { padding: 4px 8px; cursor: pointer; color: var(--text-muted); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .toc-item { padding: 4px 8px; cursor: pointer; color: var(--text-muted); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s;}
         .toc-item:hover { background: var(--btn-bg); color: var(--primary); }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -118,7 +118,8 @@
         .scratchpad-container textarea:focus { border-color: var(--primary); }
 
         .main-editor-area { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 15px; transition: all 0.3s; }
-        .tabs-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+        .tabs-bar { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+        .tabs-bar::-webkit-scrollbar { display: none; }
         .tab-item { padding: 8px 16px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 8px 8px 0 0; font-size: 14px; cursor: pointer; white-space: nowrap; box-shadow: 0 -2px 10px rgba(0,0,0,0.02); opacity: 0.7; border-bottom: none; transition: opacity 0.2s; }
         .tab-item.active { background: var(--bg-panel); opacity: 1; border-color: var(--primary); border-top: 3px solid var(--primary); font-weight: 600; color: var(--primary); }
         .tab-item:hover { opacity: 1; }
@@ -130,15 +131,15 @@
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         
         .btn { display: inline-flex; align-items: center; justify-content: center; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; outline: none; background: var(--btn-bg); color: var(--btn-text); white-space: nowrap; font-family: inherit; transition: all 0.2s; }
-        .btn:hover { background: var(--primary); color: #fff; transform: translateY(-1px); }
-        .btn:active { transform: translateY(0); }
+        @media (hover: hover) { .btn:hover { background: var(--primary); color: #fff; transform: translateY(-1px); } }
+        .btn:active { transform: translateY(0); opacity: 0.8; }
         .btn-danger { color: #e57373; background: #ffebee; }
-        .btn-danger:hover { background: #e57373; color: white; }
+        @media (hover: hover) { .btn-danger:hover { background: #e57373; color: white; } }
         .btn-punc { padding: 6px 12px; font-size: 15px; font-weight: 500; background: var(--bg-body); border: 1px solid var(--border-color); }
         
         .export-group { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); height: 34px;}
         .export-group .btn { border-radius: 0; border: none; height: 100%; padding: 0 8px; }
-.export-group select { border: none; background: var(--btn-bg); color: var(--btn-text); padding: 0 4px; outline: none; cursor: pointer; border-left: 1px solid var(--border-color); font-family: inherit; font-weight: 500; transition: width 0.2s; height: 100%;}
+        .export-group select { border: none; background: var(--btn-bg); color: var(--btn-text); padding: 0 4px; outline: none; cursor: pointer; border-left: 1px solid var(--border-color); font-family: inherit; font-weight: 500; transition: width 0.2s; height: 100%;}
 
         .punc-toolbox { display: none; background: var(--btn-bg); border-radius: 8px; padding: 12px; margin-bottom: 12px; border: 1px dashed var(--primary); animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -163,12 +164,14 @@
         
         textarea.main-ta { width: 100%; min-height: 450px; border: none; resize: vertical; padding: 20px 40px 20px 20px; font-size: var(--font-size); font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', 'TsukuARdGothic-Regular', 'PingFang SC', sans-serif; background: transparent; color: inherit; outline: none; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; transition: padding 0.4s, width 0.3s; }
         .fullscreen textarea.main-ta { flex-grow: 1; resize: none; min-height: 100%; }
+        /* 阅读模式下阻止键盘弹起并改变外观 */
+        textarea.main-ta[readonly] { cursor: default; background: var(--btn-bg); border-radius: 8px; }
 
         .minimap-container { position: relative; width: 70px; flex-shrink: 0; background: var(--bg-body); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; opacity: 0.4; transition: all 0.3s ease; cursor: pointer; user-select: none; margin-left: 5px; }
-        .minimap-container:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: var(--primary); }
+        @media (hover: hover) { .minimap-container:hover { opacity: 0.9; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: var(--primary); } }
         .minimap-content { font-family: 'Varela Round', 'Hiragino Maru Gothic ProN', sans-serif; font-size: 12px; line-height: 1.85; font-weight: 600; letter-spacing: 0.8px; white-space: pre-wrap; word-break: break-all; color: var(--text-muted); transform: scale(0.18); transform-origin: top left; width: 380px; padding: 10px; pointer-events: none; opacity: 0.7;}
         .minimap-viewport { position: absolute; top: 0; left: 0; width: 100%; background: var(--primary); opacity: 0.15; border-radius: 6px; pointer-events: none; transition: top 0.1s, opacity 0.2s; border: 1px solid var(--primary); box-sizing: border-box;}
-        .minimap-container:hover .minimap-viewport { opacity: 0.3; }
+        @media (hover: hover) { .minimap-container:hover .minimap-viewport { opacity: 0.3; } }
 
         .slash-menu { position: absolute; display: none; background: var(--modal-bg); border: 1px solid var(--border-color); box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 8px; z-index: 1000; padding: 6px; flex-direction: column; width: 180px; backdrop-filter: blur(8px); }
         .slash-item { padding: 8px 12px; font-size: 13px; cursor: pointer; border-radius: 6px; color: var(--text-main); transition: background 0.2s, color 0.2s; display: flex; align-items: center; gap: 8px; font-weight: 500;}
@@ -197,7 +200,7 @@
         body.zen-mode .toolbar-panel, body.zen-mode .tabs-bar { opacity: 0; pointer-events: none; position: absolute; }
         body.zen-mode .editor-wrapper { box-shadow: none; border-color: transparent; background: transparent; }
         body.zen-mode .access-bar { opacity: 0.2; transition: opacity 0.3s; }
-        body.zen-mode .access-bar:hover { opacity: 1; }
+        @media (hover: hover) { body.zen-mode .access-bar:hover { opacity: 1; } }
 
         .btn-expand { position: absolute; top: 15px; right: 15px; width: 32px; height: 32px; border-radius: 8px; border: none; background: var(--btn-bg); color: var(--primary); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0.7; z-index: 10; transition: opacity 0.2s, background 0.2s;}
         .btn-expand:hover { opacity: 1; background: var(--primary); color: #fff; }
@@ -233,6 +236,16 @@
         .snapshot-info { font-size: 14px; }
         .snapshot-time { font-size: 12px; color: var(--text-muted); }
 
+        /* 移动端与平板定制工具栏 */
+        .mobile-quick-bar {
+            display: none; position: fixed; bottom: 0; left: 0; width: 100%; background: var(--modal-bg);
+            border-top: 1px solid var(--border-color); padding: 8px 10px; gap: 8px; overflow-x: auto; 
+            z-index: 9998; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); backdrop-filter: blur(10px);
+            scrollbar-width: none; align-items: center; white-space: nowrap;
+        }
+        .mobile-quick-bar::-webkit-scrollbar { display: none; }
+        .mobile-quick-bar .btn { flex-shrink: 0; height: 36px; padding: 0 12px; font-size: 14px; background: var(--btn-bg); border-radius: 18px; }
+
         /* 移动端适配 */
         @media (max-width: 800px) {
             .mobile-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; background: var(--bg-panel); margin-bottom: 15px; border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -247,17 +260,19 @@
             .sidebar .toolbar-panel:first-of-type { border-top: none; margin-top: 0; }
 
             .app-layout { flex-direction: column; gap: 0;}
-            textarea.main-ta { min-height: 300px; }
+            textarea.main-ta { min-height: 300px; padding-bottom: 80px; } /* 留出底部工具栏空间 */
             .editor-wrapper.split-mode { flex-direction: column; }
             .editor-wrapper.split-mode textarea.main-ta, .editor-wrapper.split-mode .md-preview { width: 100%; min-height: 300px; border-left: none; border-top: 1px dashed var(--border-color); }
             .editor-wrapper.dual-mode { flex-direction: column; }
             .editor-wrapper.dual-mode textarea.main-ta, .editor-wrapper.dual-mode .dual-pane-container { width: 100%; min-height: 300px; border-left: none; border-top: 1px dashed var(--border-color); }
             .fr-row { flex-direction: column; align-items: stretch; }
             .minimap-container { display: none; }
+            
+            .mobile-quick-bar { display: flex; }
         }
 
         .btn-mobile-tg {
-            display: none; position: fixed; bottom: 30px; right: 20px; width: 50px; height: 50px; border-radius: 25px; background: var(--primary); color: white; font-size: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; align-items: center; justify-content: center;
+            display: none; position: fixed; bottom: 60px; right: 20px; width: 50px; height: 50px; border-radius: 25px; background: var(--primary); color: white; font-size: 20px; border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9997; align-items: center; justify-content: center;
         }
         @media (max-width: 800px) { .btn-mobile-tg { display: flex; } }
     </style>
@@ -286,13 +301,13 @@
     <div class="modal" id="sync-settings-modal" onclick="closeSyncModal(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <div class="modal-title">
-                <span>☁️ 云端同步与集成</span>
+                <span>☁️ 云端同步与高级设置</span>
                 <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="closeSyncModal()">✖ 关闭</button>
             </div>
             
             <div class="settings-group">
-                <div class="settings-label">1. WebDAV 私有云同步</div>
-                <div class="settings-desc">配置 WebDAV 服务器，实现多端 JSON 数据双向同步。</div>
+                <div class="settings-label">1. WebDAV 私有云同步 (含防覆盖保护)</div>
+                <div class="settings-desc">配置 WebDAV 服务器，实现多端双向同步。支持自动冲突检测。</div>
                 <input type="text" class="settings-input" id="dav-url" placeholder="URL (例: https://dav.yoursite.com/)">
                 <input type="text" class="settings-input" id="dav-user" placeholder="用户名 Username">
                 <input type="password" class="settings-input" id="dav-pass" placeholder="密码 Password">
@@ -300,11 +315,11 @@
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                     <button class="btn" style="flex:1;" onclick="testWebdavConnection()">🔗 测试连接</button>
                     <button class="btn" style="flex:1;" onclick="webdavPush()">⬆️ 推送云端</button>
-                    <button class="btn" style="flex:1;" onclick="webdavPull()">⬇️ 云端覆盖</button>
+                    <button class="btn" style="flex:1;" onclick="webdavPull()">⬇️ 拉取云端</button>
                 </div>
             </div>
 
-            <div class="settings-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+            <div class="settings-group">
                 <div class="settings-label">2. Telegram Bot 配置</div>
                 <div class="settings-desc">按下 <kbd>Alt + S</kbd> 快速将选中文本/全文发送到你的 TG。</div>
                 <input type="text" class="settings-input" id="tg-token" placeholder="Bot Token (例: 123456:ABC-DEF...)">
@@ -314,6 +329,12 @@
                 <div style="display: flex; gap: 8px; margin-top: 10px;">
                     <button class="btn" style="flex:1;" onclick="testTgConnection()">🔗 测试连接</button>
                 </div>
+            </div>
+
+            <div class="settings-group" style="border-bottom: none; margin-bottom: 0; padding-bottom: 0;">
+                <div class="settings-label">3. 自定义代码片段 (Snippets)</div>
+                <div class="settings-desc">格式：<code>触发词 === 替换文本</code>（每行一个）。输入触发词后自动替换。</div>
+                <textarea class="settings-input" id="custom-snippets-input" rows="4" placeholder="例如:\n/date === 2026-06-07\n;;bg === 【工作汇报】\n1. " style="resize: vertical; font-family: monospace; font-size: 12px;"></textarea>
             </div>
             
             <div class="modal-footer">
@@ -359,11 +380,12 @@
 
     <div class="access-bar" id="desktop-access-bar">
         <div class="access-group">
-            <button class="btn" style="margin-right: 5px; border-radius: 20px;" onclick="openSyncModal()" title="WebDAV 同步与 TG 账号配置">☁️ 云端/TG</button>
-            <label class="toggle-label" id="lbl-zen"><input type="checkbox" onchange="toggleZenMode(this)"> 🧘 禅模式</label>
-            <label class="toggle-label" id="lbl-typewriter"><input type="checkbox" onchange="toggleTypewriter(this)"> 🖨️ 打字机模式</label>
+            <button class="btn" style="margin-right: 5px; border-radius: 20px;" onclick="openSyncModal()" title="WebDAV 同步与扩展配置">☁️ 云端/TG</button>
+            <label class="toggle-label" id="lbl-readmode" title="锁定键盘弹起，适合触屏平板长文阅读"><input type="checkbox" onchange="toggleReadMode(this)"> 📖 Focus</label>
+            <label class="toggle-label" id="lbl-zen"><input type="checkbox" onchange="toggleZenMode(this)"> 🧘 禅</label>
+            <label class="toggle-label" id="lbl-typewriter"><input type="checkbox" onchange="toggleTypewriter(this)"> 🖨️ 打字机</label>
             <label class="toggle-label" id="lbl-markdown"><input type="checkbox" onchange="toggleMarkdown(this)"> 📝 MD预览</label>
-            <label class="toggle-label" id="lbl-dual"><input type="checkbox" onchange="toggleDualMode(this)"> 🌗 双屏对比</label>
+            <label class="toggle-label" id="lbl-dual"><input type="checkbox" onchange="toggleDualMode(this)"> 🌗 双屏</label>
             
             <div class="pomo-wrapper">
                 <button class="pomo-btn" id="pomo-toggle-btn" onclick="togglePomoPanel()" title="自定义番茄钟">🍅</button>
@@ -496,6 +518,9 @@
                 <div class="find-replace-panel" id="find-replace-panel">
                     <div class="fr-row">
                         <input type="text" id="find-input" placeholder="当前文档查找..." onkeydown="if(event.key==='Enter') doFindNext()">
+                        <label style="font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 4px;">
+                            <input type="checkbox" id="cb-regex" onchange="document.getElementById('find-input').focus()"> .* 正则
+                        </label>
                         <button class="btn" onclick="doFindPrev()">⬆️ 上一处</button>
                         <button class="btn" onclick="doFindNext()">⬇️ 下一处</button>
                         <button class="btn" style="background: var(--primary); color: white;" onclick="doSearchList()">📋 列出全部</button>
@@ -593,6 +618,16 @@
             </div>
         </main>
     </div>
+
+    <div class="mobile-quick-bar" id="mobile-quick-bar">
+        <button class="btn" onclick="actUndo()">↩ 撤销</button>
+        <button class="btn" onclick="insertSymbol('**', 1)">**粗体**</button>
+        <button class="btn" onclick="insertSymbol('、', 1)">、</button>
+        <button class="btn" onclick="insertSymbol('“”', 1)">“”</button>
+        <button class="btn" onclick="insertSymbol('【】', 1)">【】</button>
+        <button class="btn" onclick="execSlash('todo')">☑ 待办</button>
+        <button class="btn" onclick="execSlash('line')">─ 分割</button>
+    </div>
 	
     <button class="btn-mobile-tg" onclick="sendToTelegram('text')" title="推送纯文本">✈️</button>
 
@@ -606,19 +641,45 @@
         const DOCS_KEY = 'cute_editor_docs_v4';
         const TRASH_KEY = 'cute_editor_trash';
         const CONFIG_KEY = 'cute_editor_integrations';
+        const SNIPPETS_KEY = 'cute_editor_snippets';
+        
         let docs = [];
         let trashDocs = []; 
         let currentDocId = null;
         let dualDocId = null;
+        let lastSyncTime = 0; // 记录上次成功云端同步的时间戳
         
         let historyStack = []; let redoStack = []; let historyTimeout;
-        let isMarkdownMode = false; let isDualMode = false; let isTypewriterMode = false;
+        let isMarkdownMode = false; let isDualMode = false; let isTypewriterMode = false; let isReadMode = false;
         
         const editor = document.getElementById('main-input');
         const dualEditor = document.getElementById('dual-input');
         const mdPreviewPane = document.getElementById('md-preview-pane');
         const statusIndicator = document.getElementById('save-status');
         const scratchpad = document.getElementById('scratchpad');
+
+        // 初始化 Snippets
+        let customSnippets = {};
+        function loadCustomSnippets() {
+            const saved = localStorage.getItem(SNIPPETS_KEY) || "/date === 【自动日期】\n;;bg === 【工作汇报】\n1. 今日进展：\n2. 遇到问题：\n3. 明日计划：";
+            document.getElementById('custom-snippets-input').value = saved;
+            customSnippets = {};
+            saved.split('\n').forEach(line => {
+                const parts = line.split('===');
+                if(parts.length === 2 && parts[0].trim()) {
+                    let val = parts[1].trim();
+                    if(parts[0].trim() === '/date') {
+                        customSnippets[parts[0].trim()] = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+                    } else if (parts[0].trim() === '/time') {
+                        customSnippets[parts[0].trim()] = () => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+                    } else {
+                        customSnippets[parts[0].trim()] = () => val.replace(/\\n/g, '\n');
+                    }
+                }
+            });
+            // 确保默认动态日期存在
+            if(!customSnippets['/date']) customSnippets['/date'] = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+        }
 
         function adaptMobileUI() {
             const isMobile = window.innerWidth <= 800;
@@ -668,6 +729,7 @@
             scratchpad.value = localStorage.getItem('cute_scratchpad') || '';
             scratchpad.addEventListener('input', () => localStorage.setItem('cute_scratchpad', scratchpad.value));
 
+            loadCustomSnippets();
             renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions();
             updateExportWidth(document.getElementById('export-format'));
             editor.focus();
@@ -743,35 +805,105 @@
             }
         }
 
+        // ================= 查找替换与正则 =================
         let currentSearchMatches = [];
         function toggleFindReplace() { const p = document.getElementById('find-replace-panel'); if(p.style.display === 'flex') { p.style.display = 'none'; document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; editor.focus(); } else { p.style.display = 'flex'; document.getElementById('find-input').focus(); } }
-        function doFindNext() { const q = document.getElementById('find-input').value; if(!q) return; let i = editor.value.indexOf(q, editor.selectionEnd); if (i === -1) i = editor.value.indexOf(q, 0); if (i !== -1) { editor.focus(); editor.setSelectionRange(i, i + q.length); } else showToast('❌ 未找到'); }
-        function doFindPrev() { const q = document.getElementById('find-input').value; if(!q) return; let startPos = editor.selectionStart > 0 ? editor.selectionStart - 1 : 0; let i = editor.value.lastIndexOf(q, startPos); if (i === -1) i = editor.value.lastIndexOf(q, editor.value.length); if (i !== -1) { editor.focus(); editor.setSelectionRange(i, i + q.length); } else showToast('❌ 未找到'); }
+        
+        function getSearchRegex(q) {
+            const isRegex = document.getElementById('cb-regex').checked;
+            try { return isRegex ? new RegExp(q, 'g') : new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); } 
+            catch(e) { return null; }
+        }
+        function getSearchRegexSingle(q) {
+            const isRegex = document.getElementById('cb-regex').checked;
+            try { return isRegex ? new RegExp(q) : new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')); } 
+            catch(e) { return null; }
+        }
+
+        function doFindNext() { 
+            const q = document.getElementById('find-input').value; if(!q) return; 
+            const reg = getSearchRegexSingle(q); if(!reg) return showToast('❌ 正则表达式无效');
+            let content = editor.value;
+            let afterCursor = content.substring(editor.selectionEnd);
+            let match = afterCursor.match(reg);
+            if (match) { editor.focus(); editor.setSelectionRange(editor.selectionEnd + match.index, editor.selectionEnd + match.index + match[0].length); } 
+            else {
+                match = content.match(reg);
+                if (match) { editor.focus(); editor.setSelectionRange(match.index, match.index + match[0].length); }
+                else showToast('❌ 未找到');
+            }
+        }
+        function doFindPrev() { 
+            const q = document.getElementById('find-input').value; if(!q) return; 
+            const reg = getSearchRegex(q); if(!reg) return showToast('❌ 正则表达式无效');
+            let content = editor.value; let beforeCursor = content.substring(0, editor.selectionStart > 0 ? editor.selectionStart - 1 : 0);
+            let matches = [...beforeCursor.matchAll(reg)];
+            if(matches.length > 0) { const lastMatch = matches[matches.length - 1]; editor.focus(); editor.setSelectionRange(lastMatch.index, lastMatch.index + lastMatch[0].length); return; }
+            matches = [...content.matchAll(reg)];
+            if(matches.length > 0) { const lastMatch = matches[matches.length - 1]; editor.focus(); editor.setSelectionRange(lastMatch.index, lastMatch.index + lastMatch[0].length); }
+            else showToast('❌ 未找到');
+        }
+
         function doSearchList() {
             const q = document.getElementById('find-input').value; const container = document.getElementById('search-results-container'); const list = document.getElementById('search-results-list'); const countLabel = document.getElementById('search-count'); const btnReplaceSel = document.getElementById('btn-replace-selected');
             if(!q) { container.style.display = 'none'; btnReplaceSel.style.display = 'none'; return; }
-            currentSearchMatches = []; let content = editor.value; let i = content.indexOf(q, 0);
-            while (i !== -1) { currentSearchMatches.push({ start: i, end: i + q.length }); i = content.indexOf(q, i + q.length); }
+            const reg = getSearchRegex(q); if(!reg) return showToast('❌ 正则表达式无效');
+            
+            currentSearchMatches = []; let content = editor.value; 
+            const matches = [...content.matchAll(reg)];
+            matches.forEach(m => currentSearchMatches.push({ start: m.index, end: m.index + m[0].length, text: m[0] }));
+
             if (currentSearchMatches.length === 0) { container.style.display = 'none'; btnReplaceSel.style.display = 'none'; showToast('❌ 未找到匹配项'); return; }
             let html = '';
             currentSearchMatches.forEach((match, index) => {
                 const pre = content.substring(Math.max(0, match.start - 15), match.start); const post = content.substring(match.end, Math.min(content.length, match.end + 15));
-                html += `<li class="search-result-item" onclick="focusMatch(${match.start}, ${match.end})"><input type="checkbox" class="match-cb" value="${index}" checked onclick="event.stopPropagation()"><div class="search-snippet">...${pre}<span class="search-highlight">${q}</span>${post}...</div></li>`;
+                html += `<li class="search-result-item" onclick="focusMatch(${match.start}, ${match.end})"><input type="checkbox" class="match-cb" value="${index}" checked onclick="event.stopPropagation()"><div class="search-snippet">...${pre}<span class="search-highlight">${match.text}</span>${post}...</div></li>`;
             });
             list.innerHTML = html; countLabel.innerText = `共 ${currentSearchMatches.length} 处`; document.getElementById('cb-select-all').checked = true;
             container.style.display = 'flex'; btnReplaceSel.style.display = 'inline-block';
         }
         function focusMatch(start, end) { editor.focus(); editor.setSelectionRange(start, end); }
         function toggleSelectAllMatches(cb) { document.querySelectorAll('.match-cb').forEach(c => c.checked = cb.checked); }
-        function doReplaceCurrent() { const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; const sel = editor.value.substring(editor.selectionStart, editor.selectionEnd); if(sel === q) { insertTextAtCursor(r, editor.selectionStart, editor.selectionEnd, r.length); doFindNext(); } else doFindNext(); }
-        function doReplaceAll() { const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; if(!q) return; const reg = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'); const nc = editor.value.replace(reg, r); if(editor.value !== nc) { setValue(nc); showToast('✅ 替换完成'); document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; } }
+        function doReplaceCurrent() { 
+            const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; 
+            const sel = editor.value.substring(editor.selectionStart, editor.selectionEnd); 
+            const reg = getSearchRegexSingle(q); if(!reg) return;
+            if(sel.match(reg) && sel.match(reg)[0] === sel) { 
+                const replaced = sel.replace(reg, r);
+                insertTextAtCursor(replaced, editor.selectionStart, editor.selectionEnd, replaced.length); 
+                doFindNext(); 
+            } else doFindNext(); 
+        }
+        function doReplaceAll() { 
+            const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value; if(!q) return; 
+            const reg = getSearchRegex(q); if(!reg) return showToast('❌ 正则无效');
+            const nc = editor.value.replace(reg, r); 
+            if(editor.value !== nc) { setValue(nc); showToast('✅ 替换完成'); document.getElementById('search-results-container').style.display = 'none'; document.getElementById('btn-replace-selected').style.display = 'none'; } 
+        }
         function doReplaceSelected() {
             const q = document.getElementById('find-input').value; const r = document.getElementById('replace-input').value;
+            const reg = getSearchRegex(q); if(!reg) return;
             const checkboxes = document.querySelectorAll('.match-cb:checked'); if (checkboxes.length === 0) return showToast('⚠️ 未勾选');
             let indicesToReplace = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => b - a);
             let content = editor.value; let replaceCount = 0;
-            indicesToReplace.forEach(index => { const match = currentSearchMatches[index]; if (content.substring(match.start, match.end) === q) { content = content.substring(0, match.start) + r + content.substring(match.end); replaceCount++; } });
+            indicesToReplace.forEach(index => { 
+                const match = currentSearchMatches[index]; 
+                const sel = content.substring(match.start, match.end);
+                if (sel.match(reg) && sel.match(reg)[0] === sel) { 
+                    const replaced = sel.replace(reg, r);
+                    content = content.substring(0, match.start) + replaced + content.substring(match.end); 
+                    replaceCount++; 
+                } 
+            });
             if (replaceCount > 0) { setValue(content); showToast(`✅ 替换 ${replaceCount} 处`); doSearchList(); }
+        }
+
+        // ================= 模式切换 =================
+        function toggleReadMode(cb) {
+            isReadMode = cb.checked;
+            editor.readOnly = isReadMode;
+            document.getElementById('lbl-readmode').classList.toggle('active', isReadMode);
+            if(isReadMode) showToast('📖 已开启阅读模式 (防止键盘弹起)');
         }
 
         function toggleDualMode(cb) {
@@ -799,18 +931,13 @@
         editor.addEventListener('keyup', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
         editor.addEventListener('click', () => { if(isTypewriterMode) setTimeout(doTypewriterScroll, 10); });
 
-        const customSnippets = {
-            '/date': () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; },
-            '/time': () => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; },
-            ';;bg': () => "【工作汇报】\n1. 今日进展：\n2. 遇到问题：\n3. 明日计划：\n",
-            ';;todo': () => "- [ ] "
-        };
-
         let isSlashActive = false; let slashStartPos = -1; let slashIndex = 0;
 
         editor.addEventListener('input', (e) => {
             const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value;
             const textBeforeCursor = editor.value.substring(0, editor.selectionStart);
+            
+            // 处理自定义 Snippets
             for (const [key, getVal] of Object.entries(customSnippets)) {
                 if (textBeforeCursor.endsWith(key)) {
                     const val = getVal(); const start = editor.selectionStart - key.length;
@@ -862,11 +989,17 @@
         function execSlash(cmd) {
             const cmds = { 'h1': '# ', 'h2': '## ', 'h3': '### ', 'todo': '- [ ] ', 'quote': '> ', 'line': '---\n', 'code': '```\n\n```\n' };
             const insertStr = cmds[cmd];
-            const before = editor.value.substring(0, slashStartPos);
-            const after = editor.value.substring(editor.selectionEnd);
-            editor.value = before + insertStr + after;
-            editor.selectionStart = editor.selectionEnd = before.length + insertStr.length - (cmd === 'code' ? 5 : 0);
-            closeSlashMenu(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); editor.focus();
+            
+            if (isSlashActive) {
+                const before = editor.value.substring(0, slashStartPos);
+                const after = editor.value.substring(editor.selectionEnd);
+                editor.value = before + insertStr + after;
+                editor.selectionStart = editor.selectionEnd = before.length + insertStr.length - (cmd === 'code' ? 5 : 0);
+                closeSlashMenu();
+            } else {
+                insertTextAtCursor(insertStr, editor.selectionStart, editor.selectionEnd, insertStr.length - (cmd === 'code' ? 5 : 0));
+            }
+            updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); editor.focus();
         }
 
         editor.addEventListener('keydown', function(e) {
@@ -896,7 +1029,6 @@
                 return;
             }
 
-            // Alt+S 强制发送纯文本
             if (e.altKey && e.key.toLowerCase() === 's') { e.preventDefault(); sendToTelegram('text'); return; }
             if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'b' || e.key.toLowerCase() === 'i')) {
                 e.preventDefault(); const char = e.key.toLowerCase() === 'b' ? '**' : '*';
@@ -984,7 +1116,7 @@
         function updateCmdDOM() { document.getElementById('cmd-list').innerHTML = filteredItems.map((c, i) => `<li class="cmd-item ${i === cmdSelectedIndex ? 'selected' : ''}" onclick="filteredItems[${i}].action(); closeCmdOverlay();"><div style="display:flex; flex-direction:column; gap:4px;"><span>${c.name} ${c.shortcut ? `<span class="cmd-shortcut">${c.shortcut}</span>` : ''}</span>${c.isSearch ? c.displayHtml : ''}</div></li>`).join(''); }
         function selectCmd(index) { if (index < 0) index = filteredItems.length - 1; if (index >= filteredItems.length) index = 0; cmdSelectedIndex = index; updateCmdDOM(); document.querySelector('.cmd-item.selected')?.scrollIntoView({block: 'nearest'});}
 
-        // ================= 云端同步与 TG =================
+        // ================= 云端同步与集成 (含防冲突) =================
         function openSyncModal() { 
             const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); 
             document.getElementById('dav-url').value = conf.davUrl || ''; 
@@ -1005,6 +1137,9 @@
                 tgToken: document.getElementById('tg-token').value.trim(), 
                 tgChatId: document.getElementById('tg-chatid').value.trim()
             })); 
+            const snippets = document.getElementById('custom-snippets-input').value;
+            localStorage.setItem(SNIPPETS_KEY, snippets);
+            loadCustomSnippets();
             if(showMsg) showToast('✅ 配置已存'); 
         }
         
@@ -1024,14 +1159,28 @@
             } catch(e) { showToast('❌ 网络连接错误或跨域(CORS)拦截'); }
         }
 
-        async function webdavPush() { 
+        async function webdavPush(force = false) { 
             saveIntegrationConfig(false);
             const info = getWebdavEndpoint(); 
             if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); 
+            
             try { 
+                // 冲突检测
+                if (!force) {
+                    const checkRes = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) }, cache: 'no-store' }); 
+                    if (checkRes.ok) {
+                        const cloudData = await checkRes.json();
+                        if (cloudData.lastModified && cloudData.lastModified > lastSyncTime) {
+                            if(!confirm('⚠️ 警告：云端发现比本地更新的版本！\n继续推送将【覆盖】云端数据。是否强制覆盖？\n(建议先拉取备份)')) return;
+                        }
+                    }
+                }
+
                 showToast('⬆️ 推送中...'); 
-                const res = await fetch(info.url, { method: 'PUT', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass), 'Content-Type': 'application/json' }, body: JSON.stringify({ list: docs, current: currentDocId }) }); 
+                const pushTime = Date.now();
+                const res = await fetch(info.url, { method: 'PUT', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass), 'Content-Type': 'application/json' }, body: JSON.stringify({ list: docs, current: currentDocId, lastModified: pushTime }) }); 
                 if(res.ok || res.status === 201 || res.status === 204) {
+                    lastSyncTime = pushTime;
                     showToast('✅ 成功推送到私有云'); 
                     closeSyncModal();
                 } else { showToast(`❌ 推送失败: HTTP ${res.status}`); }
@@ -1048,10 +1197,24 @@
                 const res = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) }, cache: 'no-store' }); 
                 if(res.ok) { 
                     const data = await res.json(); 
-                    if(data && data.list) { docs = data.list; currentDocId = data.current || docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 成功覆盖本地'); closeSyncModal(); } else showToast('❌ 数据格式错误'); 
+                    if(data && data.list) { 
+                        docs = data.list; currentDocId = data.current || docs[0].id; 
+                        lastSyncTime = data.lastModified || Date.now();
+                        saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); 
+                        showToast('✅ 成功覆盖本地'); closeSyncModal(); 
+                    } else showToast('❌ 数据格式错误'); 
                 } else if (res.status === 404) showToast('⚠️ 云端无备份文件'); else showToast(`❌ 拉取失败: HTTP ${res.status}`); 
             } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } 
         }
+
+        // 自动静默备份 (每 10 分钟如果有 WebDAV 且有修改)
+        setInterval(() => {
+            const info = getWebdavEndpoint(); 
+            if(info && info.user && info.pass) {
+                const now = Date.now();
+                fetch(info.url.replace('meow_editor_sync.json', 'meow_editor_auto_backup.json'), { method: 'PUT', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass), 'Content-Type': 'application/json' }, body: JSON.stringify({ list: docs, current: currentDocId, timestamp: now }) }).catch(e=>{});
+            }
+        }, 600000);
 
         async function testTgConnection() {
             saveIntegrationConfig(false);
