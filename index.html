@@ -8,8 +8,9 @@
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas(1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
 
     <style>
         :root {
@@ -78,13 +79,22 @@
         
         .sidebar { width: 280px; flex-shrink: 0; background: var(--bg-panel); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); border: 1px solid var(--border-color); transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; max-height: calc(100vh - 100px); overflow-y: auto; }
         .sidebar h3 { font-size: 14px; margin-bottom: 12px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; font-weight: 600;}
-        .doc-list { list-style: none; margin-bottom: 10px; overflow-y: auto; flex-shrink: 0; max-height: 22vh; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; padding-right: 4px; }
+        .doc-list { list-style: none; margin-bottom: 10px; overflow-y: auto; flex-shrink: 0; max-height: 25vh; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; padding-right: 4px; }
         .doc-item { padding: 8px 12px; margin-bottom: 6px; border-radius: 8px; cursor: pointer; font-size: 14px; display: flex; justify-content: space-between; align-items: center; background: var(--btn-bg); }
         .doc-item:hover { background: var(--border-color); }
         .doc-item.active { background: var(--primary); color: #fff; font-weight: 600; }
         .doc-item .doc-del { opacity: 0; cursor: pointer; color: inherit; font-weight: normal; }
         @media (hover: hover) { .doc-item:hover .doc-del { opacity: 0.7; } .doc-item .doc-del:hover { opacity: 1; color: #ffeb3b; } }
         @media (hover: none) { .doc-item .doc-del { opacity: 0.7; } }
+
+        /* 标签组样式 */
+        .tag-group { margin-bottom: 4px; }
+        .tag-group-title { font-size: 13px; font-weight: 600; color: var(--text-muted); cursor: pointer; padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; border-radius: 6px; user-select: none;}
+        .tag-group-title:hover { background: var(--btn-bg); color: var(--primary); }
+        .tag-group-title::before { content: '📁'; margin-right: 6px; font-size: 12px; filter: grayscale(0.2);}
+        .tag-group.collapsed .tag-group-list { display: none; }
+        .tag-group.collapsed .tag-group-title { opacity: 0.8; }
+        .tag-group.collapsed .tag-group-title::before { content: '📁'; opacity: 0.6; }
 
         .toc-panel { max-height: 35vh; min-height: 60px; overflow-y: auto; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; font-size: 13px; padding-right: 4px; }
         .toc-item { padding: 4px 8px; cursor: pointer; color: var(--text-muted); border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transition: background 0.2s;}
@@ -230,10 +240,14 @@
         .settings-desc { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
 
         .snapshot-list { list-style: none; overflow-y: auto; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 8px; padding: 0; flex-grow: 1;}
-        .snapshot-item { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .snapshot-item { padding: 10px 15px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .snapshot-item:last-child { border-bottom: none; }
         .snapshot-info { font-size: 14px; }
         .snapshot-time { font-size: 12px; color: var(--text-muted); }
+
+        /* Diff 视图面板样式 */
+        #diff-content ins { background: #e6ffed; color: #22863a; text-decoration: none; border-radius: 2px; padding: 0 2px;}
+        #diff-content del { background: #ffeef0; color: #cb2431; text-decoration: line-through; border-radius: 2px; padding: 0 2px;}
 
         /* 移动端与平板定制工具栏 */
         .mobile-quick-bar {
@@ -249,6 +263,19 @@
         .mobile-quick-bar .btn { flex-shrink: 0; height: 38px; padding: 0 16px; font-size: 14px; background: var(--bg-body); border-radius: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); border: 1px solid var(--border-color); }
         
         .mobile-token-count { display: none; }
+        
+        /* 移动端悬浮目录按钮 */
+        .btn-mobile-toc-fab {
+            display: none; position: fixed; bottom: 130px; right: 20px; width: 46px; height: 46px; border-radius: 23px; background: var(--bg-panel); color: var(--primary); font-size: 18px; border: 1px solid var(--border-color); box-shadow: 0 6px 16px rgba(0,0,0,0.1); z-index: 9997; align-items: center; justify-content: center; transition: transform 0.2s;
+        }
+        .btn-mobile-toc-fab:active { transform: scale(0.9); }
+        
+        /* 移动端悬浮目录面板 */
+        .mobile-toc-panel {
+            display: none; position: fixed; bottom: 190px; right: 20px; width: 220px; max-height: 40vh; background: var(--modal-bg); backdrop-filter: blur(10px); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: var(--shadow); z-index: 9996; padding: 15px; flex-direction: column; overflow-y: auto;
+        }
+        .mobile-toc-panel.show { display: flex; animation: fadeIn 0.2s; }
+        .mobile-toc-panel .toc-item { padding: 6px 8px; font-size: 14px; }
 
         /* 移动端适配 */
         @media (max-width: 800px) {
@@ -272,25 +299,10 @@
                 align-items: stretch;
                 gap: 12px;
             }
-            .sidebar .access-group {
-                display: grid;
-                grid-template-columns: 1fr 1fr; /* 双列网格 */
-                gap: 10px;
-                width: 100%;
-            }
-            /* 重置原生样式使其撑满网格 */
-            .sidebar .access-group .toggle-label, 
-            .sidebar .access-group .btn, 
-            .sidebar .pomo-wrapper {
-                width: 100%;
-                justify-content: center;
-                margin: 0;
-                padding: 6px 0;
-            }
+            .sidebar .access-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+            .sidebar .access-group .toggle-label, .sidebar .access-group .btn, .sidebar .pomo-wrapper { width: 100%; justify-content: center; margin: 0; padding: 6px 0; }
             .sidebar .pomo-btn { width: 100%; }
             .sidebar .pomodoro-running-ui { width: 100%; justify-content: center; }
-            
-            /* 字体和主题选项占满整行 */
             .sidebar .access-group > span { grid-column: 1 / -1; margin-bottom: -6px; margin-left: 2px !important; font-size: 13px; }
             .sidebar .access-group > select { grid-column: 1 / -1; width: 100%; text-align: center; }
 
@@ -310,17 +322,12 @@
             
             .mobile-quick-bar { display: flex; }
             
-            /* 移动端专属 Token，紧贴编辑器下方 */
+            /* 移动端专属 Token */
             .mobile-token-count { 
-                display: block; 
-                font-size: 12px; 
-                color: var(--text-muted); 
-                text-align: right; 
-                padding: 4px 10px 0 0; 
-                margin-bottom: 70px; /* 留出底部快捷栏的空间 */
-                opacity: 0.8; 
-                font-family: monospace;
+                display: block; font-size: 12px; color: var(--text-muted); text-align: right; 
+                padding: 4px 10px 0 0; margin-bottom: 70px; opacity: 0.8; font-family: monospace;
             }
+            .btn-mobile-toc-fab { display: flex; }
         }
 
         .btn-mobile-tg {
@@ -343,6 +350,38 @@
     </div>
 
     <div class="toast" id="sys-toast">💾 操作成功</div>
+
+    <div class="modal" id="cheatsheet-modal" onclick="this.classList.remove('show')">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px;">
+            <div class="modal-title">
+                <span>⌨️ 快捷键与高阶用法</span>
+                <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="document.getElementById('cheatsheet-modal').classList.remove('show')">✖ 关闭</button>
+            </div>
+            <ul style="line-height: 2; font-size: 14px; color: var(--text-main); margin-left: 20px;">
+                <li><code>Ctrl + K</code> : 唤出全库搜索与命令库</li>
+                <li><code>Ctrl + S</code> : 强制手动静默保存</li>
+                <li><code>/</code> : 输入斜杠直接呼出排版菜单</li>
+                <li><code>Alt + S</code> : 一键发送内容至 Telegram</li>
+                <li><code>Alt + ↑/↓</code> : 快捷上下移动当前行</li>
+                <li><code>Ctrl + B / I</code> : 快速加粗 / 斜体</li>
+                <li>选中文本按 <code>[</code>, <code>"</code>, <code>(</code> : 自动成对包裹符号</li>
+                <li>长按 <code>Ctrl</code> 0.8秒 : 随时呼出此快捷键面板</li>
+                <li>标题带 <code>#标签名</code> : 侧边栏自动按标签折叠归类</li>
+                <li><code>Ctrl + V</code> 贴图 : 自动高强度压缩并转为纯文本代码</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="diff-modal" onclick="this.classList.remove('show')">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 800px; width: 95%;">
+            <div class="modal-title">
+                <span>🔍 版本内容对比</span>
+                <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="document.getElementById('diff-modal').classList.remove('show')">✖ 关闭</button>
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">左侧为快照原文，右侧为当前内容。<span style="color:#22863a;background:#e6ffed;padding:0 4px;">绿色代表你新增的</span>，<span style="color:#cb2431;background:#ffeef0;padding:0 4px;text-decoration:line-through;">红色代表已删除的</span>。</div>
+            <div id="diff-content" style="font-family: 'Varela Round', monospace; white-space: pre-wrap; font-size: 13px; line-height: 1.6; background: var(--bg-body); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow-y: auto; max-height: 60vh;"></div>
+        </div>
+    </div>
 
     <div class="cmd-overlay" id="cmd-overlay" onclick="closeCmdOverlay(event)">
         <div class="cmd-palette" onclick="event.stopPropagation()">
@@ -416,7 +455,7 @@
                 <span>🗑️ 回收站</span>
                 <button class="btn btn-danger" style="font-size: 12px; padding: 4px 8px;" onclick="emptyTrash()">彻底清空</button>
             </div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">删除的文档会暂时存放在这里，可随时恢复。</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">删除的文档会暂时存放在这里。为节省空间，删除超过 30 天的文档将被自动清理。</div>
             <ul class="snapshot-list" id="trash-list-ui"></ul>
             <div style="display:flex; gap:10px; justify-content:flex-end; flex-shrink: 0;">
                 <button class="btn" onclick="closeTrashModal()">关闭</button>
@@ -535,7 +574,7 @@
                 <textarea id="scratchpad" placeholder="存放任意草稿或灵感碎句，随写随存，跨文档通用..."></textarea>
             </div>
             
-            <div style="margin-top: auto; padding-top:10px; font-size: 12px; color: var(--text-muted); text-align: center;"><b>`Ctrl+K`</b> 命令库 | <b>`Alt+↑/↓`</b> 快捷换行</div>
+            <div style="margin-top: auto; padding-top:10px; font-size: 12px; color: var(--text-muted); text-align: center; cursor: pointer;" onclick="document.getElementById('cheatsheet-modal').classList.add('show')"><b>长按 `Ctrl`</b> 唤出快捷键帮助</div>
         </aside>
 
         <main class="main-editor-area" id="main-area">
@@ -546,6 +585,7 @@
                 <div class="toolbar-header">
                     <span class="toolbar-title">✨ 极速编辑区</span>
                     <div>
+                        <button class="btn" style="margin-right: 5px;" onclick="document.getElementById('cheatsheet-modal').classList.add('show')" title="快捷键速查表">❓ 帮助</button>
                         <button class="btn" onclick="openSnapshotModal()">🕒 快照</button>
                         <button class="btn" style="background: var(--primary); color: white; margin-left: 5px;" onclick="togglePuncBox()">🧰 符号工具箱 ▾</button>
                     </div>
@@ -636,8 +676,9 @@
 
             <div class="editor-wrapper" id="editor-wrap">
                 <button class="btn-expand" id="btn-fullscreen" onclick="toggleFullscreen()" title="放大/缩小">⛶</button>
+                <button class="btn-mobile-toc-fab" onclick="toggleMobileTOC()" title="浮动大纲">📑</button>
                 
-                <textarea id="main-input" class="main-ta" placeholder="在此输入正文...&#10;快捷键：输入 / 呼出命令菜单，选中文本按 [ 自动包裹，Alt+↑/↓ 移动行。"></textarea>
+                <textarea id="main-input" class="main-ta" placeholder="在此输入正文...&#10;快捷键：输入 / 呼出命令菜单，选中文本按 [ 自动包裹，Alt+↑/↓ 移动行。&#10;你可以直接 Ctrl+V 粘贴图片，它会自动压缩并转为代码。"></textarea>
                 
                 <div class="md-preview" id="md-preview-pane"></div>
                 
@@ -672,6 +713,11 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <div class="mobile-toc-panel" id="mobile-toc-panel">
+        <div style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; color: var(--primary);">📑 本文大纲</div>
+        <div id="mobile-toc-list"></div>
     </div>
 
     <div class="mobile-quick-bar" id="mobile-quick-bar">
@@ -713,6 +759,55 @@
         const statusIndicator = document.getElementById('save-status');
         const scratchpad = document.getElementById('scratchpad');
 
+        // 长按 Ctrl 呼出 Cheat Sheet
+        let ctrlPressTimer;
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Control' && !ctrlPressTimer) {
+                ctrlPressTimer = setTimeout(() => {
+                    document.getElementById('cheatsheet-modal').classList.add('show');
+                }, 800);
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'Control') {
+                clearTimeout(ctrlPressTimer);
+                ctrlPressTimer = null;
+            }
+        });
+
+        // 剪贴板图片拦截与高强度压缩 Base64 转换
+        editor.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') !== -1) {
+                    e.preventDefault();
+                    showToast('⏳ 正在压缩并插入图片...');
+                    const file = items[i].getAsFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 1000;
+                            let width = img.width; let height = img.height;
+                            if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+                            canvas.width = width; canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+                            
+                            const imgMd = `\n![image](${dataUrl})\n`;
+                            insertTextAtCursor(imgMd, editor.selectionStart, editor.selectionEnd, imgMd.length);
+                            showToast('✅ 图片插入成功');
+                        }
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                    break;
+                }
+            }
+        });
+
         // 初始化 Snippets
         let customSnippets = {};
         function loadCustomSnippets() {
@@ -732,7 +827,6 @@
                     }
                 }
             });
-            // 确保默认动态日期存在
             if(!customSnippets['/date']) customSnippets['/date'] = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
         }
 
@@ -743,17 +837,16 @@
 
             if (isMobile) {
                 if (!sidebar.contains(accessBar)) {
-                    // 移动端将功能栏移入侧边栏顶部
                     sidebar.insertBefore(accessBar, sidebar.firstChild);
                 }
             } else {
                 if (sidebar.contains(accessBar)) {
-                    // PC端复原功能栏位置
                     const layout = document.querySelector('.app-layout');
                     layout.parentNode.insertBefore(accessBar, layout);
                 }
                 sidebar.classList.remove('show');
                 document.getElementById('sidebar-overlay')?.classList.remove('show');
+                document.getElementById('mobile-toc-panel').classList.remove('show');
             }
         }
         window.addEventListener('resize', adaptMobileUI);
@@ -763,13 +856,27 @@
             document.getElementById('sidebar-overlay').classList.toggle('show');
         }
 
+        function toggleMobileTOC() {
+            document.getElementById('mobile-toc-panel').classList.toggle('show');
+        }
+
         window.onload = () => {
             const savedData = localStorage.getItem(DOCS_KEY);
             if (savedData) { const parsed = JSON.parse(savedData); docs = parsed.list || []; }
             if(docs.length === 0) docs.push({ id: Date.now(), title: '默认文档', content: '', snapshots: [] });
             
+            // 回收站 30 天自动清理防爆内存
             const savedTrash = localStorage.getItem(TRASH_KEY);
-            if(savedTrash) { trashDocs = JSON.parse(savedTrash); }
+            if(savedTrash) { 
+                let loadedTrash = JSON.parse(savedTrash);
+                const now = Date.now();
+                trashDocs = loadedTrash.filter(doc => {
+                    const ts = doc.deletedTimestamp || Date.parse(doc.deletedAt);
+                    if (isNaN(ts)) return true;
+                    return (now - ts) <= (30 * 24 * 60 * 60 * 1000);
+                });
+                if (trashDocs.length !== loadedTrash.length) saveTrashState();
+            }
             
             const sessionCurrent = sessionStorage.getItem('cute_current_doc');
             if (sessionCurrent && docs.find(d => d.id == sessionCurrent)) { currentDocId = parseInt(sessionCurrent); } 
@@ -835,7 +942,7 @@
             ul.innerHTML = trashDocs.map((doc, i) => `<li class="snapshot-item"><div><div class="snapshot-info">📄 ${doc.title}</div><div class="snapshot-time">删除时间: ${doc.deletedAt || '未知'} | 字数: ${doc.content.length}</div></div><div style="display:flex; gap:5px;"><button class="btn" style="padding: 4px 8px;" onclick="restoreFromTrash(${i})">恢复</button></div></li>`).join('');
         }
         function restoreFromTrash(index) {
-            const doc = trashDocs[index]; trashDocs.splice(index, 1); delete doc.deletedAt; docs.push(doc); 
+            const doc = trashDocs[index]; trashDocs.splice(index, 1); delete doc.deletedAt; delete doc.deletedTimestamp; docs.push(doc); 
             saveTrashState(); saveDocsStateSilent(); renderDocsList(); renderTabs(); updateDualSelectOptions(); renderTrashList(); showToast('✅ 文档已恢复');
         }
         function emptyTrash() {
@@ -847,7 +954,7 @@
             if(docs.length <= 1) return showToast('⚠️ 至少保留一个文档！');
             if(confirm('确定删除该文档吗？（可在回收站找回）')) {
                 const targetDoc = docs.find(d => d.id === id);
-                if(targetDoc) { targetDoc.deletedAt = new Date().toLocaleString(); trashDocs.push(targetDoc); saveTrashState(); }
+                if(targetDoc) { targetDoc.deletedAt = new Date().toLocaleString(); targetDoc.deletedTimestamp = Date.now(); trashDocs.push(targetDoc); saveTrashState(); }
                 docs = docs.filter(d => d.id !== id);
                 if(currentDocId === id) currentDocId = docs[0].id;
                 saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions();
@@ -986,7 +1093,6 @@
             const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value;
             const textBeforeCursor = editor.value.substring(0, editor.selectionStart);
             
-            // 处理自定义 Snippets
             for (const [key, getVal] of Object.entries(customSnippets)) {
                 if (textBeforeCursor.endsWith(key)) {
                     const val = getVal(); const start = editor.selectionStart - key.length;
@@ -1118,16 +1224,60 @@
         function actUndo() { if (historyStack.length > 1) { redoStack.push(historyStack.pop()); editor.value = historyStack[historyStack.length - 1]; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); } }
         function actRedo() { if (redoStack.length > 0) { const next = redoStack.pop(); historyStack.push(next); editor.value = next; const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value; saveDocsStateSilent(); updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); } }
 
-        function newDoc() { const newName = prompt('输入新文档名称：', '未命名文档'); if (newName === null) return; const id = Date.now(); docs.push({ id, title: newName.trim() || '未命名文档', content: '', snapshots: [] }); currentDocId = id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(id); updateDualSelectOptions(); }
-        function loadDoc(id) { currentDocId = id; sessionStorage.setItem('cute_current_doc', id); const doc = docs.find(d => d.id === id); if(!doc) return; editor.value = doc.content; historyStack = [doc.content]; redoStack = []; updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); saveDocsStateSilent(); renderDocsList(); renderTabs(); }
+        function newDoc() { const newName = prompt('输入新文档名称 (支持 #标签名 前缀)：', '未命名文档'); if (newName === null) return; const id = Date.now(); docs.push({ id, title: newName.trim() || '未命名文档', content: '', snapshots: [] }); currentDocId = id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(id); updateDualSelectOptions(); }
+        function loadDoc(id) { currentDocId = id; sessionStorage.setItem('cute_current_doc', id); const doc = docs.find(d => d.id === id); if(!doc) return; editor.value = doc.content; historyStack = [doc.content]; redoStack = []; updateStats(); renderTOC(); updateMinimap(); if(isMarkdownMode) renderMarkdown(); saveDocsStateSilent(); renderDocsList(); renderTabs(); document.getElementById('mobile-toc-panel').classList.remove('show'); }
         function clearAllDocs() { if(confirm('⚠️ 此操作不可逆！如果清空，建议先导出备份。')) { docs = [{ id: Date.now(), title: '默认文档', content: '', snapshots: [] }]; currentDocId = docs[0].id; saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); showToast('✅ 已清空所有文档'); } }
         function actClear() { if(confirm('清空当前文本？(可在快照找回)')) setValue(''); }
-        function renameDocPrompt(id) { const doc = docs.find(d => d.id === id); const newName = prompt('输入新文档名称：', doc.title); if(newName && newName.trim()) { doc.title = newName.trim(); saveDocsStateSilent(); renderDocsList(); renderTabs(); updateDualSelectOptions(); } }
-        function renderDocsList() { document.getElementById('doc-list-ui').innerHTML = docs.map(d => `<li class="doc-item ${d.id === currentDocId ? 'active' : ''}" onclick="loadDoc(${d.id})" ondblclick="renameDocPrompt(${d.id})"><span>📄 ${d.title}</span><span class="doc-del" onclick="deleteDoc(${d.id}, event)">✖</span></li>`).join(''); }
-        function renderTabs() { document.getElementById('tabs-bar-ui').innerHTML = docs.map(d => `<div class="tab-item ${d.id === currentDocId ? 'active' : ''}" onclick="loadDoc(${d.id})" oncontextmenu="renameDocPrompt(${d.id}); return false;">${d.title} ${d.id === currentDocId ? '' : `<span style="margin-left:5px;opacity:0.5" onclick="deleteDoc(${d.id}, event)">×</span>`}</div>`).join(''); }
+        function renameDocPrompt(id) { const doc = docs.find(d => d.id === id); const newName = prompt('修改文档名称 (可添加 #标签名 前缀)：', doc.title); if(newName && newName.trim()) { doc.title = newName.trim(); saveDocsStateSilent(); renderDocsList(); renderTabs(); updateDualSelectOptions(); } }
+        
+        function renderDocsList() { 
+            const listUi = document.getElementById('doc-list-ui');
+            let groups = { '📌 未分类': [] };
+            
+            docs.forEach(d => {
+                const match = d.title.match(/^#(\S+)\s+(.*)/);
+                if (match) {
+                    const tag = match[1];
+                    const cleanTitle = match[2];
+                    if (!groups[tag]) groups[tag] = [];
+                    groups[tag].push({ ...d, cleanTitle });
+                } else {
+                    groups['📌 未分类'].push({ ...d, cleanTitle: d.title });
+                }
+            });
 
-        function renderTOC() { const lines = editor.value.split('\n'); let html = ''; lines.forEach((line, index) => { const match = line.match(/^(#{1,6})\s+(.+)$/); if(match) { html += `<div class="toc-item" style="padding-left: ${(match[1].length-1)*12}px" onclick="scrollToLine(${index})" title="${match[2]}">${match[2]}</div>`; } }); document.getElementById('toc-list').innerHTML = html || '<div style="color:var(--text-muted); font-size:12px; text-align:center;">暂无标题 (# 触发)</div>'; }
-        function scrollToLine(lineIndex) { const lines = editor.value.split('\n'); let chars = 0; for(let i=0; i<lineIndex; i++) chars += lines[i].length + 1; editor.focus(); editor.setSelectionRange(chars, chars); editor.blur(); editor.focus(); }
+            let html = '';
+            for (const tag in groups) {
+                if (groups[tag].length === 0) continue;
+                html += `<div class="tag-group" id="group-${tag}">
+                    <div class="tag-group-title" onclick="this.parentElement.classList.toggle('collapsed')">
+                        <span>${tag === '📌 未分类' ? '' : '#'}${tag}</span>
+                        <span style="font-size:11px; font-weight:normal; opacity:0.6;">${groups[tag].length}</span>
+                    </div>
+                    <div class="tag-group-list">`;
+                groups[tag].forEach(d => {
+                    html += `<li class="doc-item ${d.id === currentDocId ? 'active' : ''}" onclick="loadDoc(${d.id})" ondblclick="renameDocPrompt(${d.id})">
+                        <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 85%;">📄 ${d.cleanTitle}</span>
+                        <span class="doc-del" onclick="deleteDoc(${d.id}, event)">✖</span>
+                    </li>`;
+                });
+                html += `</div></div>`;
+            }
+            listUi.innerHTML = html;
+        }
+        function renderTabs() { document.getElementById('tabs-bar-ui').innerHTML = docs.map(d => `<div class="tab-item ${d.id === currentDocId ? 'active' : ''}" onclick="loadDoc(${d.id})" oncontextmenu="renameDocPrompt(${d.id}); return false;">${d.title.replace(/^#\S+\s+/, '')} ${d.id === currentDocId ? '' : `<span style="margin-left:5px;opacity:0.5" onclick="deleteDoc(${d.id}, event)">×</span>`}</div>`).join(''); }
+
+        function renderTOC() { 
+            const lines = editor.value.split('\n'); let html = ''; 
+            lines.forEach((line, index) => { 
+                const match = line.match(/^(#{1,6})\s+(.+)$/); 
+                if(match) { html += `<div class="toc-item" style="padding-left: ${(match[1].length-1)*12}px" onclick="scrollToLine(${index})" title="${match[2]}">${match[2]}</div>`; } 
+            }); 
+            const finalHtml = html || '<div style="color:var(--text-muted); font-size:12px; text-align:center;">暂无标题 (# 触发)</div>';
+            document.getElementById('toc-list').innerHTML = finalHtml; 
+            document.getElementById('mobile-toc-list').innerHTML = finalHtml; 
+        }
+        function scrollToLine(lineIndex) { const lines = editor.value.split('\n'); let chars = 0; for(let i=0; i<lineIndex; i++) chars += lines[i].length + 1; editor.focus(); editor.setSelectionRange(chars, chars); editor.blur(); editor.focus(); document.getElementById('mobile-toc-panel').classList.remove('show');}
 
         const baseCommands = [ { name: "新建文档", shortcut: "New", action: newDoc }, { name: "清空当前内容", shortcut: "Clear", action: actClear }, { name: "打开历史快照", shortcut: "Snap", action: openSnapshotModal }, { name: "发送至 Telegram (纯文本)", shortcut: "Alt+S", action: () => sendToTelegram('text') }, { name: "打开查找替换面板", action: toggleFindReplace }, { name: "打开回收站", action: openTrashModal } ];
         let cmdSelectedIndex = 0; let filteredItems = [];
@@ -1165,7 +1315,7 @@
         function updateCmdDOM() { document.getElementById('cmd-list').innerHTML = filteredItems.map((c, i) => `<li class="cmd-item ${i === cmdSelectedIndex ? 'selected' : ''}" onclick="filteredItems[${i}].action(); closeCmdOverlay();"><div style="display:flex; flex-direction:column; gap:4px;"><span>${c.name} ${c.shortcut ? `<span class="cmd-shortcut">${c.shortcut}</span>` : ''}</span>${c.isSearch ? c.displayHtml : ''}</div></li>`).join(''); }
         function selectCmd(index) { if (index < 0) index = filteredItems.length - 1; if (index >= filteredItems.length) index = 0; cmdSelectedIndex = index; updateCmdDOM(); document.querySelector('.cmd-item.selected')?.scrollIntoView({block: 'nearest'});}
 
-        // ================= 云端同步与集成 (含防冲突) =================
+        // ================= WebDAV 云端同步 =================
         function openSyncModal() { 
             const conf = JSON.parse(localStorage.getItem(CONFIG_KEY) || '{}'); 
             document.getElementById('dav-url').value = conf.davUrl || ''; 
@@ -1214,7 +1364,6 @@
             if(!info) return showToast('⚠️ 请先填写 WebDAV URL'); 
             
             try { 
-                // 冲突检测
                 if (!force) {
                     const checkRes = await fetch(info.url, { method: 'GET', headers: { 'Authorization': getBasicAuthHeader(info.user, info.pass) }, cache: 'no-store' }); 
                     if (checkRes.ok) {
@@ -1256,7 +1405,6 @@
             } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } 
         }
 
-        // 自动静默备份 (每 10 分钟如果有 WebDAV 且有修改)
         setInterval(() => {
             const info = getWebdavEndpoint(); 
             if(info && info.user && info.pass) {
@@ -1356,7 +1504,6 @@
             document.getElementById('s-token').innerText = tokenEstimate; 
             document.getElementById('s-para').innerText = paraCount; 
             
-            // 移动端 Token 更新
             const mobileTokenDisplay = document.getElementById('mobile-token-display');
             if (mobileTokenDisplay) mobileTokenDisplay.innerText = tokenEstimate;
             
@@ -1386,8 +1533,39 @@
         function closeSnapshotModal(e) { if(e) e.stopPropagation(); document.getElementById('snapshot-modal').classList.remove('show'); }
         function saveSnapshot() { const doc = docs.find(d => d.id === currentDocId); const name = prompt('快照命名：', new Date().toLocaleString()); if(name) { doc.snapshots.unshift({ name, content: editor.value, time: new Date().toLocaleString() }); if(doc.snapshots.length > 20) doc.snapshots.pop(); saveDocsStateSilent(); renderSnapshots(); showToast('📷 已保存'); } }
         function restoreSnapshot(index) { const doc = docs.find(d => d.id === currentDocId); if(confirm('覆盖当前内容？')) { setValue(doc.snapshots[index].content); closeSnapshotModal(); showToast('✅ 已恢复'); } }
+        
+        function showSnapshotDiff(index) {
+            const doc = docs.find(d => d.id === currentDocId);
+            const snapContent = doc.snapshots[index].content;
+            const currContent = editor.value;
+
+            if (typeof diff_match_patch === 'undefined') {
+                return showToast('❌ Diff 库加载失败，请检查网络');
+            }
+
+            const dmp = new diff_match_patch();
+            const diffs = dmp.diff_main(snapContent, currContent);
+            dmp.diff_cleanupSemantic(diffs);
+
+            let html = '';
+            diffs.forEach(part => {
+                const type = part[0];
+                const text = part[1].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+                if (type === 1) html += `<ins>${text}</ins>`;
+                else if (type === -1) html += `<del>${text}</del>`;
+                else html += `<span style="color:var(--text-muted)">${text}</span>`;
+            });
+
+            document.getElementById('diff-content').innerHTML = html;
+            document.getElementById('diff-modal').classList.add('show');
+        }
+
         function clearAllSnapshots() { if(confirm('清空所有快照？')) { const doc = docs.find(d => d.id === currentDocId); doc.snapshots = []; saveDocsStateSilent(); renderSnapshots(); showToast('🗑️ 已清空'); } }
-        function renderSnapshots() { const doc = docs.find(d => d.id === currentDocId); const ul = document.getElementById('snapshot-list-ui'); if(!doc.snapshots || doc.snapshots.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">暂无快照</li>'; return; } ul.innerHTML = doc.snapshots.map((s, i) => `<li class="snapshot-item"><div><div class="snapshot-info">${s.name}</div><div class="snapshot-time">${s.time} (字数: ${s.content.length})</div></div><button class="btn" style="padding: 4px 8px;" onclick="restoreSnapshot(${i})">恢复</button></li>`).join(''); }
+        function renderSnapshots() { 
+            const doc = docs.find(d => d.id === currentDocId); const ul = document.getElementById('snapshot-list-ui'); 
+            if(!doc.snapshots || doc.snapshots.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">暂无快照</li>'; return; } 
+            ul.innerHTML = doc.snapshots.map((s, i) => `<li class="snapshot-item"><div><div class="snapshot-info">${s.name}</div><div class="snapshot-time">${s.time} (字数: ${s.content.length})</div></div><div style="display:flex; gap:5px;"><button class="btn" style="padding: 4px 8px;" onclick="showSnapshotDiff(${i})">对比</button><button class="btn" style="padding: 4px 8px;" onclick="restoreSnapshot(${i})">恢复</button></div></li>`).join(''); 
+        }
 
         let pomoMins = 25, pomoTime = 0, pomoInterval = null, isPomoPaused = false;
         function togglePomoPanel() { document.getElementById('pomo-panel').classList.toggle('show'); }
