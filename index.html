@@ -8,7 +8,7 @@
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas(1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
 
@@ -525,7 +525,8 @@
             <h3 style="margin-top: 5px;">📂 文档列表 
                 <div style="display: flex; gap: 5px;">
                     <button class="btn" style="padding: 4px 8px; font-size: 12px;" onclick="newDoc()">+ 新建</button>
-                    <button class="btn" style="padding: 4px 8px; font-size: 12px; background:var(--bg-panel);" onclick="openTrashModal()" title="回收站">🗑️</button>
+                    <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="clearAllDocs()" title="一键清空列表">🗑️</button>
+                    <button class="btn" style="padding: 4px 8px; font-size: 12px; background:var(--bg-panel);" onclick="openTrashModal()" title="回收站">♻️</button>
                 </div>
             </h3>
             <ul class="doc-list" id="doc-list-ui"></ul>
@@ -949,6 +950,32 @@
             if(trashDocs.length === 0) return;
             if(confirm('⚠️ 彻底清空回收站后将无法恢复，确定吗？')) { trashDocs = []; saveTrashState(); renderTrashList(); showToast('🗑️ 回收站已清空'); }
         }
+        
+        // 安全的一键清空所有文档功能
+        function clearAllDocs() { 
+            if(confirm('⚠️ 确定要清空文档列表的所有文档吗？（清空后可在回收站找回）')) { 
+                const now = Date.now();
+                const timeStr = new Date().toLocaleString();
+                // 将所有现有文档推入回收站
+                docs.forEach(d => { 
+                    d.deletedAt = timeStr; 
+                    d.deletedTimestamp = now; 
+                    trashDocs.push(d); 
+                });
+                saveTrashState();
+                
+                // 重置为一个空的默认文档
+                docs = [{ id: Date.now(), title: '默认文档', content: '', snapshots: [] }]; 
+                currentDocId = docs[0].id; 
+                saveDocsStateSilent(); 
+                renderDocsList(); 
+                renderTabs(); 
+                loadDoc(currentDocId); 
+                updateDualSelectOptions(); 
+                showToast('🗑️ 文档列表已清空'); 
+            } 
+        }
+
         function deleteDoc(id, e) {
             if(e) e.stopPropagation(); 
             if(docs.length <= 1) return showToast('⚠️ 至少保留一个文档！');
