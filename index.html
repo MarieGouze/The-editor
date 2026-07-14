@@ -768,7 +768,76 @@ body, .sidebar, .modal-content, .toolbar-panel, .btn, .doc-item, input, textarea
     </div>
 	
     <button class="btn-mobile-tg" onclick="sendToTelegram('text')" title="推送纯文本">✈️</button>
+    <!-- 引入我们刚刚拆分的 4 个核心模块 (注意顺序不能错) -->
+<script src="store.js"></script>
+<script src="ui.js"></script>
+<script src="editor.js"></script>
+<script src="sync.js"></script>
 
+    <!-- 页面初始化逻辑 -->
+    <script>
+        // 注册 Service Worker (PWA 离线支持)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(err => console.error('❌ ServiceWorker 失败: ', err));
+            });
+        }
+
+        // 页面加载完毕后的初始化
+        window.onload = () => {
+            const savedData = localStorage.getItem(DOCS_KEY);
+            if (savedData) { const parsed = JSON.parse(savedData); docs = parsed.list || []; }
+            if(docs.length === 0) docs.push({ id: Date.now(), title: '默认文档', content: '', snapshots: [] });
+            
+            // 回收站 30 天自动清理防爆内存
+            const savedTrash = localStorage.getItem(TRASH_KEY);
+            if(savedTrash) { 
+                let loadedTrash = JSON.parse(savedTrash);
+                const now = Date.now();
+                trashDocs = loadedTrash.filter(doc => {
+                    const ts = doc.deletedTimestamp || Date.parse(doc.deletedAt);
+                    if (isNaN(ts)) return true;
+                    return (now - ts) <= (30 * 24 * 60 * 60 * 1000);
+                });
+                if (trashDocs.length !== loadedTrash.length) saveTrashState();
+            }
+            
+            const sessionCurrent = sessionStorage.getItem('cute_current_doc');
+            if (sessionCurrent && docs.find(d => d.id == sessionCurrent)) { currentDocId = parseInt(sessionCurrent); } 
+            else { currentDocId = savedData ? JSON.parse(savedData).current : docs[0].id; sessionStorage.setItem('cute_current_doc', currentDocId); }
+            
+            scratchpad.value = localStorage.getItem('cute_scratchpad') || '';
+            scratchpad.addEventListener('input', () => localStorage.setItem('cute_scratchpad', scratchpad.value));
+
+            loadCustomSnippets();
+            renderDocsList(); 
+            renderTabs(); 
+            loadDoc(currentDocId); 
+            updateDualSelectOptions();
+            updateExportWidth(document.getElementById('export-format'));
+            editor.focus();
+            adaptMobileUI();
+        };
+
+        // 监听多标签页的数据同步
+        window.addEventListener('storage', (e) => {
+            if (e.key === DOCS_KEY && e.newValue) {
+                const parsed = JSON.parse(e.newValue); const newDocs = parsed.list || []; let uiNeedsUpdate = false;
+                newDocs.forEach(nd => {
+                    const ld = docs.find(d => d.id === nd.id);
+                    if (ld) {
+                        if (ld.id !== currentDocId && ld.id !== dualDocId && ld.content !== nd.content) ld.content = nd.content;
+                        if (ld.title !== nd.title) { ld.title = nd.title; uiNeedsUpdate = true; }
+                        ld.snapshots = nd.snapshots;
+                    } else { docs.push(nd); uiNeedsUpdate = true; }
+                });
+                const oldLen = docs.length;
+                docs = docs.filter(ld => newDocs.find(nd => nd.id === ld.id) || ld.id === currentDocId || ld.id === dualDocId);
+                if (docs.length !== oldLen) uiNeedsUpdate = true;
+                if (uiNeedsUpdate) { renderDocsList(); renderTabs(); updateDualSelectOptions(); }
+            }
+        });
+    </script>
     
 </body>
 </html>
