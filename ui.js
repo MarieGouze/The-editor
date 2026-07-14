@@ -37,6 +37,19 @@ function toggleSidebar() {
 function toggleMobileTOC() {
     document.getElementById('mobile-toc-panel').classList.toggle('show');
 }
+// ================= 桌面端侧边栏折叠 =================
+function toggleDesktopSidebar() {
+    const sidebar = document.getElementById('sidebar-drawer');
+    const btn = document.getElementById('btn-collapse-sidebar');
+    sidebar.classList.toggle('collapsed');
+    if (sidebar.classList.contains('collapsed')) {
+        btn.innerText = '▶';
+        btn.title = "展开侧边栏";
+    } else {
+        btn.innerText = '◀';
+        btn.title = "收起侧边栏";
+    }
+}
 
 // ================= 列表与目录渲染 =================
 function renderDocsList() { 
@@ -75,8 +88,23 @@ function renderDocsList() {
     listUi.innerHTML = html;
 }
 
+let draggedTabId = null;
+
 function renderTabs() { 
-    document.getElementById('tabs-bar-ui').innerHTML = docs.map(d => `<div class="tab-item ${d.id === currentDocId ? 'active' : ''}" onclick="loadDoc(${d.id})" oncontextmenu="renameDocPrompt(${d.id}); return false;">${d.title.replace(/^#\S+\s+/, '')} ${d.id === currentDocId ? '' : `<span style="margin-left:5px;opacity:0.5" onclick="deleteDoc(${d.id}, event)">×</span>`}</div>`).join(''); 
+    document.getElementById('tabs-bar-ui').innerHTML = docs.map(d => `<div class="tab-item ${d.id === currentDocId ? 'active' : ''}" draggable="true" ondragstart="dragTab(event, ${d.id})" ondragover="allowDropTab(event)" ondrop="dropTab(event, ${d.id})" onclick="loadDoc(${d.id})" oncontextmenu="renameDocPrompt(${d.id}); return false;">${d.title.replace(/^#\S+\s+/, '')} ${d.id === currentDocId ? '' : `<span style="margin-left:5px;opacity:0.5" onclick="deleteDoc(${d.id}, event)">×</span>`}</div>`).join(''); 
+}
+
+function dragTab(ev, id) { draggedTabId = id; }
+function allowDropTab(ev) { ev.preventDefault(); }
+function dropTab(ev, targetId) {
+    ev.preventDefault();
+    if (draggedTabId === targetId) return;
+    const fromIndex = docs.findIndex(d => d.id === draggedTabId);
+    const toIndex = docs.findIndex(d => d.id === targetId);
+    const [removed] = docs.splice(fromIndex, 1);
+    docs.splice(toIndex, 0, removed);
+    saveDocsStateSilent(); // 保存新顺序
+    renderTabs(); // 重新渲染
 }
 
 function renderTOC() { 
@@ -137,7 +165,10 @@ function openTrashModal() { renderTrashList(); document.getElementById('trash-mo
 function closeTrashModal(e) { if(e) e.stopPropagation(); document.getElementById('trash-modal').classList.remove('show'); }
 function renderTrashList() {
     const ul = document.getElementById('trash-list-ui');
-    if(trashDocs.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">回收站为空</li>'; return; }
+    if(trashDocs.length === 0) { 
+        ul.innerHTML = '<div style="padding: 40px 10px; text-align:center; color: var(--text-muted);"><div style="font-size:40px; margin-bottom:10px;">😸</div>回收站空空如也~</div>'; 
+        return; 
+    }
     ul.innerHTML = trashDocs.map((doc, i) => `<li class="snapshot-item"><div><div class="snapshot-info">📄 ${doc.title}</div><div class="snapshot-time">删除时间: ${doc.deletedAt || '未知'} | 字数: ${doc.content.length}</div></div><div style="display:flex; gap:5px;"><button class="btn" style="padding: 4px 8px;" onclick="restoreFromTrash(${i})">恢复</button></div></li>`).join('');
 }
 function restoreFromTrash(index) {
@@ -179,7 +210,10 @@ function showSnapshotDiff(index) {
 function clearAllSnapshots() { if(confirm('清空所有快照？')) { const doc = docs.find(d => d.id === currentDocId); doc.snapshots = []; saveDocsStateSilent(); renderSnapshots(); showToast('🗑️ 已清空'); } }
 function renderSnapshots() { 
     const doc = docs.find(d => d.id === currentDocId); const ul = document.getElementById('snapshot-list-ui'); 
-    if(!doc.snapshots || doc.snapshots.length === 0) { ul.innerHTML = '<li style="padding: 10px; text-align:center; color: var(--text-muted);">暂无快照</li>'; return; } 
+    if(!doc.snapshots || doc.snapshots.length === 0) { 
+        ul.innerHTML = '<div style="padding: 40px 10px; text-align:center; color: var(--text-muted);"><div style="font-size:40px; margin-bottom:10px;">📸</div>暂无历史快照，快去存一个吧~</div>'; 
+        return; 
+    } 
     ul.innerHTML = doc.snapshots.map((s, i) => `<li class="snapshot-item"><div><div class="snapshot-info">${s.name}</div><div class="snapshot-time">${s.time} (字数: ${s.content.length})</div></div><div style="display:flex; gap:5px;"><button class="btn" style="padding: 4px 8px;" onclick="showSnapshotDiff(${i})">对比</button><button class="btn" style="padding: 4px 8px;" onclick="restoreSnapshot(${i})">恢复</button></div></li>`).join(''); 
 }
 
@@ -225,7 +259,7 @@ function doTypewriterScroll() {
     const text = editor.value; const start = editor.selectionStart; const linesToCursor = text.substring(0, start).split('\n').length;
     const totalLines = text.split('\n').length || 1; const ratio = linesToCursor / totalLines;
     const targetScroll = (editor.scrollHeight * ratio) - (editor.clientHeight * 0.4); 
-    editor.scrollTop = Math.max(0, targetScroll);
+    editor.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
 }
 
 function toggleZenMode(cb) { 
@@ -281,3 +315,26 @@ function renderCmdList(query) {
 }
 function updateCmdDOM() { document.getElementById('cmd-list').innerHTML = filteredItems.map((c, i) => `<li class="cmd-item ${i === cmdSelectedIndex ? 'selected' : ''}" onclick="filteredItems[${i}].action(); closeCmdOverlay();"><div style="display:flex; flex-direction:column; gap:4px;"><span>${c.name} ${c.shortcut ? `<span class="cmd-shortcut">${c.shortcut}</span>` : ''}</span>${c.isSearch ? c.displayHtml : ''}</div></li>`).join(''); }
 function selectCmd(index) { if (index < 0) index = filteredItems.length - 1; if (index >= filteredItems.length) index = 0; cmdSelectedIndex = index; updateCmdDOM(); document.querySelector('.cmd-item.selected')?.scrollIntoView({block: 'nearest'});}
+
+// ================= 自动跟随系统暗色模式 =================
+function initAutoTheme() {
+    const prefersDarkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    
+    // 如果当前主题是默认的（没有手动选过），则跟随系统
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    if (currentTheme === 'light' || currentTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', prefersDarkScheme.matches ? 'dark' : 'light');
+    }
+
+    // 监听系统主题变化
+    prefersDarkScheme.addEventListener("change", (e) => {
+        const theme = document.documentElement.getAttribute('data-theme');
+        // 只有在基础明暗模式下才自动切换，高反差模式不干预
+        if (theme === 'light' || theme === 'dark') {
+            document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        }
+    });
+}
+
+// 页面加载时初始化
+document.addEventListener('DOMContentLoaded', initAutoTheme);

@@ -113,12 +113,24 @@ async function webdavPull() {
                 document.getElementById('cloud-list-modal').classList.add('show');
                 closeSyncModal();
             } else if (data && data.list) {
-                if(!confirm('⚠️ 发现旧版云端数据，将【完全覆盖】本地所有文档！确定吗？')) return; 
-                docs = data.list; currentDocId = data.current || docs[0].id; 
-                lastSyncTime = data.lastModified || Date.now();
-                saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); 
-                showToast('✅ 成功覆盖本地'); closeSyncModal(); 
-            } else showToast('❌ 数据格式错误'); 
+    if(!confirm('⚠️ 发现旧版云端数据，即将覆盖本地文档。\n\n为防止丢失，当前本地文档会自动移入【回收站】。确定吗？')) return; 
+    
+    // 【防丢失保护】
+    const now = Date.now();
+    docs.forEach(d => { 
+        const backupDoc = JSON.parse(JSON.stringify(d));
+        backupDoc.title = backupDoc.title + ' (云端覆盖前备份)';
+        backupDoc.deletedAt = new Date().toLocaleString(); 
+        backupDoc.deletedTimestamp = now; 
+        trashDocs.push(backupDoc); 
+    });
+    saveTrashState();
+
+    docs = data.list; currentDocId = data.current || docs[0].id; 
+    lastSyncTime = data.lastModified || Date.now();
+    saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); 
+    showToast('✅ 成功覆盖本地 (原数据已入回收站)'); closeSyncModal(); 
+} else showToast('❌ 数据格式错误'); 
         } else if (res.status === 404) showToast('⚠️ 云端无备份文件'); else showToast(`❌ 拉取失败: HTTP ${res.status}`); 
     } catch(e) { showToast('❌ 网络或跨域(CORS)错误'); } 
 }
@@ -133,7 +145,21 @@ function renderCloudList() {
     }).join('');
 }
 function restoreCloudBackup(index) {
-    if(!confirm('⚠️ 恢复此备份将【完全覆盖】本地所有文档和 TG 配置！确定吗？')) return; 
+    if(!confirm('⚠️ 恢复此备份将覆盖当前本地文档。\n\n为了安全，当前的本地文档将被自动放入【回收站】以防丢失。确定继续吗？')) return; 
+    
+    // 【防丢失保护】自动备份当前本地文档到回收站
+    const now = Date.now();
+    const timeStr = new Date().toLocaleString();
+    docs.forEach(d => { 
+        // 深拷贝以防引用冲突
+        const backupDoc = JSON.parse(JSON.stringify(d));
+        backupDoc.title = backupDoc.title + ' (云端覆盖前备份)';
+        backupDoc.deletedAt = timeStr; 
+        backupDoc.deletedTimestamp = now; 
+        trashDocs.push(backupDoc); 
+    });
+    saveTrashState();
+
     const b = currentCloudBackups[index];
     docs = b.docs;
     currentDocId = b.currentDocId || docs[0].id;
@@ -147,7 +173,7 @@ function restoreCloudBackup(index) {
     }
 
     saveDocsStateSilent(); renderDocsList(); renderTabs(); loadDoc(currentDocId); updateDualSelectOptions(); 
-    showToast('✅ 成功恢复云端备份'); 
+    showToast('✅ 成功恢复云端备份 (原数据已入回收站)'); 
     closeCloudListModal();
 }
 

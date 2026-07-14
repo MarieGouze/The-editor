@@ -52,7 +52,23 @@ function loadCustomSnippets() {
 
 // ================= 核心保存与读取 =================
 let saveStatusTimeout;
+let diskWriteTimeout; // 新增：用于防抖的定时器
+
 function saveDocsStateSilent() {
+    // 1. 仅更新 UI 状态，不立刻读写硬盘（极其轻量，不会卡顿）
+    statusIndicator.style.opacity = '1';
+    statusIndicator.innerText = '⏳ 待保存...'; 
+    statusIndicator.classList.add('saving');
+
+    // 2. 延迟 1.5 秒后真正写入硬盘（防抖：如果一直连续打字，就不会执行）
+    clearTimeout(diskWriteTimeout);
+    diskWriteTimeout = setTimeout(() => {
+        performDiskWrite();
+    }, 1500);
+}
+
+// 真正的硬盘读写函数
+function performDiskWrite() {
     const savedData = localStorage.getItem(DOCS_KEY); let latestDocs = [...docs];
     if (savedData) { const parsed = JSON.parse(savedData); latestDocs = parsed.list || [...docs]; }
     docs.forEach(localDoc => {
@@ -65,14 +81,10 @@ function saveDocsStateSilent() {
     docs = latestDocs; 
     localStorage.setItem(DOCS_KEY, JSON.stringify({ list: docs, current: currentDocId }));
     
-    statusIndicator.style.opacity = '1';
-    statusIndicator.innerText = '⏳ 保存中...'; statusIndicator.classList.add('saving');
+    statusIndicator.innerText = `✅ 已保存到本地`;
+    statusIndicator.classList.remove('saving');
     clearTimeout(saveStatusTimeout);
-    saveStatusTimeout = setTimeout(() => {
-        statusIndicator.innerText = `✅ 已保存到本地`;
-        statusIndicator.classList.remove('saving');
-        setTimeout(() => { statusIndicator.style.opacity = '0'; }, 3000);
-    }, 800);
+    saveStatusTimeout = setTimeout(() => { statusIndicator.style.opacity = '0'; }, 3000);
 }
 
 function saveTrashState() { 

@@ -177,15 +177,19 @@ editor.addEventListener('input', (e) => {
     const doc = docs.find(d => d.id === currentDocId); if(doc) doc.content = editor.value;
     const textBeforeCursor = editor.value.substring(0, editor.selectionStart);
     
-    for (const [key, getVal] of Object.entries(customSnippets)) {
-        if (textBeforeCursor.endsWith(key)) {
-            const val = getVal(); const start = editor.selectionStart - key.length;
-            editor.value = editor.value.substring(0, start) + val + editor.value.substring(editor.selectionEnd);
-            editor.selectionStart = editor.selectionEnd = start + val.length;
-            if(doc) doc.content = editor.value;
-            break;
-        }
+    // 优化 Snippet 匹配：只提取光标前最后一个连续的词进行匹配
+const match = textBeforeCursor.match(/(\S+)$/);
+if (match) {
+    const lastWord = match[1];
+    if (customSnippets[lastWord]) {
+        const val = customSnippets[lastWord](); 
+        const start = editor.selectionStart - lastWord.length;
+        editor.value = editor.value.substring(0, start) + val + editor.value.substring(editor.selectionEnd);
+        editor.selectionStart = editor.selectionEnd = start + val.length;
+        if(doc) doc.content = editor.value;
     }
+}
+
     if (e.data === '/') {
         const charBefore = editor.value.charAt(editor.selectionStart - 2);
         if (!charBefore || charBefore === '\n' || charBefore === ' ') openSlashMenu();
@@ -243,6 +247,37 @@ editor.addEventListener('keydown', function(e) {
     const wrapPairs = { '"':'"', "'":"'", '(':')', '[':']', '{':'}', '<':'>', '《':'》', '「':'」', '【':'】', '（':'）', '“':'”', '‘':'’' };
     if (selected && wrapPairs[e.key]) { e.preventDefault(); insertTextAtCursor(`${e.key}${selected}${wrapPairs[e.key]}`, start, end, 1); }
 });
+
+// 更新底部状态栏（行号、列号、选中字数）
+function updateCursorAndSelection() {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const textBeforeCursor = editor.value.substring(0, start);
+    const lines = textBeforeCursor.split('\n');
+    const currentLine = lines.length;
+    const currentCol = lines[lines.length - 1].length + 1;
+    
+    const cursorEl = document.getElementById('cursor-position');
+    if(cursorEl) cursorEl.innerText = `行 ${currentLine}, 列 ${currentCol}`;
+
+    const selEl = document.getElementById('selection-stats');
+    if(selEl) {
+        if (start !== end) {
+            const selectedText = editor.value.substring(start, end);
+            selEl.innerText = `| 选中: ${selectedText.length} 字符`;
+            selEl.style.display = 'inline';
+        } else {
+            selEl.style.display = 'none';
+        }
+    }
+}
+
+// 绑定光标变动事件
+document.addEventListener('selectionchange', () => {
+    if (document.activeElement === editor) updateCursorAndSelection();
+});
+editor.addEventListener('keyup', updateCursorAndSelection);
+editor.addEventListener('click', updateCursorAndSelection);
 
 // 监听滚动与点击
 let isSyncingLeft = false;
@@ -327,9 +362,16 @@ editor.addEventListener('paste', async (e) => {
                         canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
                         const dataUrl = canvas.toDataURL('image/jpeg', 0.5); 
-                        const imgMd = `\n![image](${dataUrl})\n`;
-                        insertTextAtCursor(imgMd, editor.selectionStart, editor.selectionEnd, imgMd.length);
-                        showToast('✅ 图片插入成功 (建议配置图床)');
+const imgMd = `\n![image](${dataUrl})\n`;
+try {
+    // 预检容量，LocalStorage 上限约为 5MB
+    const currentSize = JSON.stringify(docs).length;
+    if (currentSize + imgMd.length > 4.5 * 1024 * 1024) throw new Error("QuotaExceeded");
+    insertTextAtCursor(imgMd, editor.selectionStart, editor.selectionEnd, imgMd.length);
+    showToast('✅ 图片插入成功 (建议配置图床)');
+} catch(err) {
+    showToast('❌ 本地存储空间不足！请配置图床或清理回收站。');
+}
                     }
                     img.src = event.target.result;
                 };
@@ -339,3 +381,16 @@ editor.addEventListener('paste', async (e) => {
         }
     }
 });
+
+// 解决移动端软键盘弹起遮挡输入区域的问题
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+        const wrap = document.getElementById('editor-wrap');
+        // 如果视口高度变小，说明键盘弹起了，增加底部内边距
+        if (window.visualViewport.height < window.innerHeight * 0.8) {
+            wrap.style.paddingBottom = (window.innerHeight - window.visualViewport.height + 20) + 'px';
+        } else {
+            wrap.style.paddingBottom = '5px'; // 恢复默认
+        }
+    });
+}
