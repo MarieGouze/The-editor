@@ -259,8 +259,19 @@ editor.addEventListener('click', () => { if(isTypewriterMode) setTimeout(doTypew
 // 监听全局事件
 document.addEventListener('click', (e) => { 
     if (isSlashActive && e.target.id !== 'main-input') closeSlashMenu(); 
-    if (!document.querySelector('.pomo-wrapper').contains(e.target)) document.getElementById('pomo-panel').classList.remove('show'); 
-    if (!e.target.closest('.access-group')) document.getElementById('mode-menu').style.display = 'none';
+    
+    // 安全获取番茄钟面板
+    const pomoWrapper = document.querySelector('.pomo-wrapper');
+    if (pomoWrapper && !pomoWrapper.contains(e.target)) {
+        const pomoPanel = document.getElementById('pomo-panel');
+        if (pomoPanel) pomoPanel.classList.remove('show');
+    }
+    
+    // 安全判断点击目标，防止 closest 报错
+    if (e.target && typeof e.target.closest === 'function' && !e.target.closest('.access-group')) {
+        const modeMenu = document.getElementById('mode-menu');
+        if (modeMenu) modeMenu.style.display = 'none';
+    }
 });
 
 let altPressTimer;
